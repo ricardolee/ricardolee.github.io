@@ -1,5 +1,5 @@
 #+TITLE:       org学习笔记
-#+AUTHOR:      lipengcheng
+#+AUTHOR:      Li Pengcheng
 #+EMAIL:       lpc1983@gmail.com
 #+DATE:        2014-04-16 Wed
 #+URI:         /blog/%y/%m/%d/org学习笔记
