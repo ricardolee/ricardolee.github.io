@@ -1,4 +1,4 @@
-#+TITLE:       org学习笔记
+#+TITLE:       org 学习笔记
 #+AUTHOR:      Li Pengcheng
 #+EMAIL:       lpc1983@gmail.com
 #+DATE:        2014-04-16 Wed
