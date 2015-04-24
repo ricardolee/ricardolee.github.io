@@ -1,3 +1,5 @@
 #+TITLE: 首页
 
-从nikola org-page建立的个人blog，记录点滴
+从nikola 迁移到 Kelvin 的 org-page
+
+个人blog，记录点滴
