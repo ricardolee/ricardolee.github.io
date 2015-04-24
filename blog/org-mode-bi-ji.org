@@ -1,0 +1,523 @@
+#+TITLE:       org学习笔记
+#+AUTHOR:      lipengcheng
+#+EMAIL:       lpc1983@gmail.com
+#+DATE:        2014-04-16 Wed
+#+URI:         /blog/%y/%m/%d/org学习笔记
+#+KEYWORDS:    org
+#+TAGS:        org
+#+LANGUAGE:    AUTO
+#+OPTIONS:     H:3 num:nil toc:nil \n:nil ::t |:t ^:nil -:nil f:t *:t <:t
+#+DESCRIPTION: org 学习笔记
+#+STARTUP: indent
+#+OPTIONS: toc:t
+* 用大纲组织内容 
+** 定义标题
+1. * 一级大纲 ** 二级大纲 以此类推
+2. 位于每行首，* 后有个空格， 做多支持十级
+** 大纲相关快捷键
+*** 折叠大纲
+
+| 快捷键 | 命令         | 说明                                                 |
+|--------+--------------+------------------------------------------------------|
+| S-TAB  | org-shifttab | 大纲三种状态切换（折叠，展开全部大纲，展开全部内容） |
+| TAB    | org-cycle    | 当前大纲状态切换                                     |
+
+*** 在大纲之间移动
+
+| 快捷键    | 命令 | 说明                      |
+|-----------+------+---------------------------|
+| C-c C-n/p |      | 下/上一标题               |
+| C-c C-f/b |      | 下/上一标题(仅限同级标题) |
+| C-c C-u   |      | 跳转到上一级标题          |
+| C-c C-j   |      | 切换到大纲到浏览状态      |
+
+*** 基于大纲的编辑
+| 快捷键         | 命令 | 说明                 |
+|----------------+------+----------------------|
+| M-RET          |      | 插入一个同级标题     |
+| M-S-RET        |      | 插入一个同级TODO标题 |
+| M-LEFT/RIGHT   |      | 当前标题升/降级      |
+| M-S-LEFT/RIGHT |      | 当前子树升/降级      |
+| M-UP/DOWN      |      | 当前子树上/下移      |
+| M-S-UP/DOWN    |      | 当前标题上/下移      |
+| C-c *          |      | 本行设为标题/正文    |
+| C-c C-w        |      | 移动子树             |
+| C-c M-w        |      | 拷贝子树             |
+| C-x n s/w      |      | 仅显示当前子树/返回  |
+| C-c C-x b      |      | 新缓冲区显示当前子树 |
+| C-c /          |      | 搜索大纲多种搜索模式 |
+| C-c C-c        |      | 标记                 |
+  
+**** 大纲的显示方式
+1. M-x org-indent-mode 依照自动缩进模式
+2. 文档这种以 org-indent-mode 打开, 头部添加
+#+BEGIN_SRC org
+#+STARTUP: indent
+#+END_SRC
+3. 全部org文档以 org-indent-mode 打开，可在配置文件中添加
+#+BEGIN_SRC emacs-lisp
+(setq org-startup-indented t)
+#+END_SRC
+
+* 超链接与图文混排
+** 创建连接
+*** 显示连接格式
+  #+BEGIN_SRC 
+  [[link][description]] or [[link]]
+  #+END_SRC
+*** 自动连接
+所有uri org-mode 都会自动将其视为连接，包括文件地址, http连接, email地址，新闻组，BBDB 数据库项， IRC 等。
+#+BEGIN_SRC org
+http://www.xxx.com/domink             web                                  
+file:/home/xxx/img.jpg                file
+/home/xxx/img.jpg                     same as above                        
+docview:papers/last.pdf::N            open file in doc-view mode at page N 
+id:B7423F4D-2E8A-471B-8810            Link to heading by ID                
+news:comp.emacs                       Usenet link                          
+mailto:admin@galaxy.net               Mail link                            
+irc:/irc.com/#emacs/bob               IRC link                             
+info:org:External%201links            Info node link (with encoded space) 
+#+END_SRC
+
+对于文件还可以用定位符
+#+BEGIN_SRC org
+file:~/code/main.c::N                 第N行            
+file:~/xx.org::Target                 目标<<Target>> 
+file:~/xx.org::#Id                    自定义id项       
+#+END_SRC
+
+在连接前后加 "~" 不自动连接
+#+BEGIN_SRC 
+~htt://www.xxx.com~
+#+END_SRC
+
+| 快捷键  | 命令              | 说明                                |
+|---------+-------------------+-------------------------------------|
+| C-c C-l | org-insert-link   | 创建修改连接， 可以引用已保存的连接 |
+| C-c C-o | org-open-at-point | 打开连接                            |
+| C-c %   |                   | 记录内部连接地址                    |
+| C-c &   |                   | 跳转到已记录的内部连接              |
+
+** 内部连接
+#+BEGIN_SRC org
+定义锚点  #<<my-anchor>>
+[[my-anchor][内部连接]]
+#+END_SRC
+脚注可以看做是一种特殊的内部连接，使用 "fn:" 前缀
+#+BEGIN_SRC 
+添加脚注连接 [[fn:footprint1][脚注1]]
+定义脚注 [fn:footprint1]
+#+END_SRC
+** 显示图片
+M-x iimage-mode RET 开启 iimage-mode 显示图片
+* 轻量级标记语言
+** 字体
+#+BEGIN_SRC org
+*粗体*
+/斜体/
++删除线+
+_下滑线_
+下标:  H_2 O
+上标:  E=mc^2
+等宽字：=git= 或者 ~git~
+#+END_SRC
+** 表格
+Org 很容易处理ASCII文本表格。任何以'|'为首的非空字符行都会被认为是表格的一部分，同时也是列分隔符。
+#+BEGIN_SRC org
+| Name  | Pone | Age |
+|-------+------+-----|
+| Peter | 1234 | 17  |
+| Anna  | 4321 | 25  |
+#+END_SRC
+C-c RET 便可生成表结构 
+*** 创建转换和转换表格
+ | 快捷键   | 命令 | 说明           |
+ |----------+------+----------------|
+ | C-c 竖线 |      | 创建或转换表格 |
+*** 调整区域移动
+ | 快捷键  | 命令 | 说明                            |
+ |---------+------+---------------------------------|
+ | C-c C-c |      | 调整表格，不移动光标            |
+ | TAB     |      | 移动到下一区域， 必要时新建一行 |
+ | S-TAB   |      | 移动到上一区域                  |
+ | RET     |      | 移动到下一行，必要时新建一行    |
+*** 编辑行和列
+ | 快捷键         | 命令 | 说明                             |
+ |----------------+------+----------------------------------|
+ | M-LEFT/RIGHT   |      | 移动列                           |
+ | M-UP/DOWN      |      | 移动行                           |
+ | M-S-LEFT/RIGHT |      | 删除/插入列                      |
+ | M-S-UP/DOWN    |      | 删除/插入行                      |
+ | C-c -          |      | 添加水平分割线                   |
+ | C-c RET        |      | 添加水平分割线并跳到下一行       |
+ | C-c ^          |      | 根据当前列排序, 可以选择排列方式 |
+*** 表格中计算
+行@列$, 某单元格@1$1 或者 A1
+vsum 求和，vmean平均数, 某单元格输入=expression(整列) 或 :=expression(仅这个单元格), tab键便可计算 
+或者C-u C-c C-c
+#+BEGIN_SRC org
+| 数量 | 单价 |  总额 |
+|------+------+-------|
+|    2 | 3.45 |   6.9 |
+|    4 | 4.34 | 17.36 |
+|    5 | 3.44 |  17.2 |
+|    5 |  5.6 |   28. |
+#+TBLFM: $3=$1*$2
+** 段落
+新起段落，需要留一个空行， 与MediaWiki类似。
+** 列表
+Org 能够自动识别有序列表， 无序列表和描述列表。
+
++ 无序列表以'_' '+' '*' 开头， '*'要求缩进 为避免和大纲弄混，不建议使用
++ 有序列表以'1.' '1)' 开头
++ 描述列表 '::' 将项和描述分开。
++ 有序列表和无序列表都以缩进表示层级。只要对齐缩进，不管是换行还是分块都认为是处于当前列表项。
+
+
+- 同一列表中项的第一行必须缩进相同的程度。
+- 列表会根据项的结束而自动关闭， 两个空行时会强制关闭
+
+示例:
+#+BEGIN_SRC org
+My favorite scenes are (in this order)
+  1. The attack of the Rohirrim
+  2. Eowyn's fight with the witch king
+      + this was already my favorite scene in the book
+      + I really like Miranda Otto.
+  Important actors in this film are:
+  - Elijah Wood :: He plays Frodo
+  - Sean Austin :: He plays Sam, Frodo's friend.
+#+END_SRC
+显示如下内容
+-----
+My favorite scenes are (in this order)
+  1. The attack of the Rohirrim
+  2. Eowyn's fight with the witch king
+      + this was already my favorite scene in the book
+      + I really like Miranda Otto.
+  Important actors in this film are:
+  - Elijah Wood :: He plays Frodo
+  - Sean Austin :: He plays Sam, Frodo's friend.
+-----
+*** 列表操作快捷键
+| 快捷键         | 命令 | 说明                      |
+|----------------+------+---------------------------|
+| TAB            |      | 折叠列表项                |
+| M-RET          |      | 插入项                    |
+| M-S-RET        |      | 插入带复选框的项          |
+| M-S-UP/DOWN    |      | 移动列表项                |
+| M-LEFT/RIGHT   |      | 升/降级列表项，不包括子项 |
+| M-S-LEFT/RIGTH |      | 升/降级列表项，包括子项   |
+| C-c C-c        |      | 改变复选框状态            |
+| C-c -          |      | 更换列表标记（循环切换)   |
+** 分割线
+ 五条短线及以上显示分割线
+
+ ~-----~
+* 标签
+** tag的作用
+** 标记tag
+** 预定义tag
+** tag的作用
+对于信息的管理，有分类(category)和标签(tag)两种方式。这两种方式各有特点：
+
+通常分类是固定的，很少变化，而tag随时可以增加。 分类通常表现为树状结构，比较清晰，但是树状结构过于简单，不能表达复杂的信息。比如，如果有多个分类树，处理起来就会比较麻烦。
+
+所以，这两种方式通常结合起来使用。比如blog系统中，通常既支持文章的分类（树），又支持为每篇文章作tag标记。
+
+org-mode作为最好的文档编辑利器 ，在支持文内大纲（也是树状结构）的同时，还方便的支持tag功能。tag可以在多篇文档中共用。
+** 标记tag
+在Org-mode中，可以对标题增加tag标记。标记的格式如下：
+#+BEGIN_SRC org
+跟特留尼西特握手                    :苦差:薪水:逃不掉:
+#+END_SRC
+而且Org-mode的标签自动按照大纲树的结构继承。即子标题自动继承父标题的标签。比如：
+#+BEGIN_SRC org
+ * Meeting with the French group     :work:
+ ** Summary by Frank                 :boss:notes:
+ *** TODO Prepare slides for him     :action:
+#+END_SRC
+则最后一行标题具有 work, boss, notes, action 四个标签。
+
+如果希望文档中的所有标题都具有某些标签，只需要定义文档元数据
+#+BEGIN_SRC org
+#+FILETAGS: :Peter:Boss:Secret:
+#+END_SRC
+如果手工输入标签，在标题后设置标签，键入:后，M-Tab自动提供标签的补齐。
+
+更方便的做法是在正文部分用C-c C-q 或直接在标题上用C-c C-c创建标签，这种方式可以列出所有预定义的标签以便选取。
+** 预定义tag
+上面提到，除了可以输入标签外，还可以从预定义的标签中进行选择。预定义的方式有两种：
++ 在当前文件头部定义
+  这种方式预定义的标签只能在当前文件中使用。使用#+TAGS元数据进行标记，如：
+  #+BEGIN_SRC org
+  #+TAGS: { 桌面(d) 服务器(s) }  编辑器(e) 浏览器(f) 多媒体(m) 压缩(z)        
+  #+END_SRC
+  每项之间必须用空格分隔，可以在括号中定义一个快捷键；花括号里的为标签组，只能选择一个
+  对标签定义进行修改后，要在标签定义的位置按 C-c C-c 刷新才能生效。
++ 在配置文件中定义 上面的标签定义只能在当前文件生效，如果要在所有的.org 文件中生效，需要在 Emacs 配置文件 .emacs 中进行定义：
+  #+BEGIN_SRC emacs-lisp
+  (setq org-tag-alist '(
+
+                    (:startgroup . nil)
+                         ("桌面" . ?d) ("服务器" . ?s)
+                    (:endgroup . nil)
+                    ("编辑器" . ?e)
+                    ("浏览器" . ?f) 
+                    ("多媒体" . ?m)
+                    ))    
+  #+END_SRC
+默认情况下，org会动态维护一个Tag列表，即当前输入的标签若不在列表中，则自动加入列表以供下次补齐使用。
+
+为了使这几种情况（默认列表、文件预设tags，全局预设tags）同时生效，需要在文件中增加一个空的TAGS定义：
+#+BEGIN_SRC org
+#+TAGS
+#+END_SRC         
+** 按tag搜索
+使用标签可以更好的管理内容。org-mode提供了以下功能：
+| KEYS    | COMMENT                                       |
+|---------+-----------------------------------------------|
+| C-c \   | 按tag搜索标题                                 |
+| C-c / m | 搜索并按树状结构显示                          |
+| C-c a m | 按标签搜索多个文件（需要将文件加入全局agenda) |
+
+可以使用逻辑表达式限制条件，更准确灵活的搜索
+#+BEGIN_SRC 
++     和      a+b     同时有这两个标签
+-     排除    a-b     有 a 但没有 b
+|     或      a|b     有 a 或者有 b
+&     和      a&b     同时有 a 和 b，可以用“+”替代
+#+END_SRC
+
+在查询视图中 C-c C-c 退出
+* 导出和发布
+参考：http://orgmode.org/manual/Exporting.html
+
+Org-mode可以完美的编辑，但是最终文档可能需要发布成其他的格式。 Org-Mode 支持多种文档的输出，包括：
++ 文本
++ 网页
++ PDF（需要 Latex 支持）
++ XOXO
++ FreeMind/Xmind
++ Docbook
++ iCalendar（苹果 iCal 文件）
++ ……
+** 准备工作
+*** 文档元数据
+#+BEGIN_SRC org
+#+TITLE:       the title to be shown (default is the buffer name)
+#+AUTHOR:      the author (default taken from user-full-name)
+#+DATE:        a date, an Org timestamp1, or a format string for format-time-string
+#+EMAIL:       his/her email address (default from user-mail-address)
+#+DESCRIPTION: the page description, e.g. for the XHTML meta tag
+#+KEYWORDS:    the page keywords, e.g. for the XHTML meta tag
+#+LANGUAGE:    language for HTML, e.g. ‘en’ (org-export-default-language)
+#+TEXT:        Some descriptive text to be inserted at the beginning.
+#+TEXT:        Several lines may be given.
+#+OPTIONS:     H:2 num:t toc:t \n:nil @:t ::t |:t ^:t f:t TeX:t ...
+#+BIND:        lisp-var lisp-val, e.g.: org-export-latex-low-levels itemize
+               You need to confirm using these, or configure org-export-allow-BIND
+#+LINK_UP:     the ``up'' link of an exported page
+#+LINK_HOME:   the ``home'' link of an exported page
+#+LATEX_HEADER: extra line(s) for the LaTeX header, like \usepackage{xyz}
+#+EXPORT_SELECT_TAGS:   Tags that select a tree for export
+#+EXPORT_EXCLUDE_TAGS:  Tags that exclude a tree from export
+#+XSLT:        the XSLT stylesheet used by DocBook exporter to generate FO file
+#+END_SRC
+~#+OPTIONS~是复合选项， 包括
+#+BEGIN_SRC 
+H:         set the number of headline levels for export
+num:       turn on/off section-numbers
+toc:       turn on/off table of contents, or set level limit (integer)
+\n:        turn on/off line-break-preservation (DOES NOT WORK)
+@:         turn on/off quoted HTML tags
+::         turn on/off fixed-width sections
+|:         turn on/off tables
+^:         turn on/off TeX-like syntax for sub- and superscripts.  If
+           you write "^:{}", a_{b} will be interpreted, but
+           the simple a_b will be left as it is.
+-:         turn on/off conversion of special strings.
+f:         turn on/off footnotes like this[1].
+todo:      turn on/off inclusion of TODO keywords into exported text
+tasks:     turn on/off inclusion of tasks (TODO items), can be nil to remove
+           all tasks, todo to remove DONE tasks, or list of kwds to keep
+pri:       turn on/off priority cookies
+tags:      turn on/off inclusion of tags, may also be not-in-toc
+<:         turn on/off inclusion of any time/date stamps like DEADLINES
+*:         turn on/off emphasized text (bold, italic, underlined)
+TeX:       turn on/off simple TeX macros in plain text
+LaTeX:     configure export of LaTeX fragments.  Default auto
+skip:      turn on/off skipping the text before the first heading
+author:    turn on/off inclusion of author name/email into exported file
+email:     turn on/off inclusion of author email into exported file
+creator:   turn on/off inclusion of creator info into exported file
+timestamp: turn on/off inclusion creation time into exported file
+d:         turn on/off inclusion of drawers
+#+END_SRC
+文档元数据建议放在文档的头部
+*** 内容元数据
++ 诗赋区块
+  定义了分行区块可以实现普通换行
+  #+BEGIN_SRC org
+  #+BEGIN_VERSE
+   Great clouds overhead
+   Tiny black birds rise and fall
+   Snow covers Emacs
+       -- AlexSchroeder
+  #+END_VERSE
+  #+END_SRC
++ 引用区块
+  左右都会留出缩进，常用于引用
+  #+BEGIN_SRC org
+  #+BEGIN_QUOTE
+    缩进区块
+  #+END_QUOTE
+  #+END_SRC
++ 居中区块
+  #+BEGIN_SRC org
+  #+BEGIN_CENTER
+  Everything should be made as simple as possible, \\
+  but not any simpler
+  #+END_CENTER
+  #+END_SRC 
++ 代码区块
+  #+BEGIN_SRC org
+  #+BEGIN_SRC ruby
+  require 'redcarpet'
+  md = Redcarpet.new("Hello, world.")
+  puts md.to_html
+  #+END_SRC
+  #+END_SRC
++ 示例区块
+  #+BEGIN_SRC org
+  : 单行的例子以冒号开头
+  
+  #+BEGIN_EXAMPLE
+  多行的例子
+  使用区块
+  #+END_EXAMPLE
+  #+END_SRC
++ 注释区块
+  注释不会被导出
+  1. 以'#'开头的行
+  2. 区块
+     #+BEGIN_SRC org
+     #+BEGIN_COMMENT
+     块注释
+     ...
+     #+END_COMMENT
+     #+END_SRC
++ 表格与图片引用
+  对于表格和图片，可以在前面增加标题和标签说明，以方便交叉引用。
+
+  比如在表格的前面添加
+  #+BEGIN_SRC org
+  #+CAPTION: This is the caption for the next table (or link)
+  #+LABEL: tbl:table1
+  #+END_SRC
+  通过 
+  #+BEGIN_SRC org
+  \ref{table1}
+  #+END_SRC
+  来引用该表格。
+*** 嵌入html
+对于导出html以及发布，嵌入html代码就很有用。比如下面的例子适用于格式化为cnblogs的代码块：
+#+BEGIN_SRC org
+#+BEGIN_HTML
+  <div class="cnblogs_Highlighter">
+  <pre class="brush:cpp">
+  int main() {
+    return 0;
+  }
+  </pre>
+  </div>
+#+END_HTML
+#+END_SRC
+相当于在cnblogs的网页编辑器中插入"c++"代码。
+*** 包含文件
+当导出文档时，你可以包含其他文件中的内容。比如，想包含你的“.emacs”文件，你可以用：
+#+BEGIN_SRC org
+#+INCLUDE: "~/.emacs" src emacs-lisp
+#+END_SRC
+src emacs-lisp 为可选的格式， 默认为org模式来处理文档。
++ quote
++ example
++ src emacs-list
+*** 嵌入LaTex
+#+BEGIN_SRC org
+Angles are written as Greek letters \alpha, \beta and \gamma. The mass if
+the sun is M_sun = 1.989 x 10^30 kg. The radius of the sun is R_{sun} =
+6.96 x 10^8 m. If $a^2=b$ and $b=2$, then the solution must be either
+$a=+\sqrt{2}$ or $a=-\sqrt{2}$.
+\begin{equation}
+x=\sqrt{b}
+\end{equation}
+#+END_SRC
+结果如下：
+-----
+Angles are written as Greek letters \alpha, \beta and \gamma. The mass if
+the sun is M_sun = 1.989 x 10^30 kg. The radius of the sun is R_{sun} =
+6.96 x 10^8 m. If $a^2=b$ and $b=2$, then the solution must be either
+$a=+\sqrt{2}$ or $a=-\sqrt{2}$.
+\begin{equation}
+x=\sqrt{b}
+\end{equation}
+-----
+** 导出
+C-c C-e 便可导出相应格式了
+pdf 格式需要配置中文Latex环境
+latex中文配置 直接使用xeCJK包支持中文， 把pdf-process 替换为xelatex默认不支持中文
+为了直接处理中文tex文件，把tex-mode的command替换为xelatex
+#+BEGIN_SRC emacs-lisp
+;; org-mode LaTex-mode
+;; Use XeLaTeX to export PDF in Org-mode
+(defun my-org-mode-config () 
+  (setq org-export-default-language "AUTO")
+  (setq org-latex-default-class "cn_article")
+  (add-to-list 'org-latex-classes '("cn_article" 
+				    "
+\\documentclass[11pt]{article}
+\\usepackage{xeCJK}
+\\setCJKmainfont{STHeiti}
+" 
+				    ("\\section{%s}" . "\\section*{%s}")
+				    ("\\subsection{%s}" . "\\subsection*{%s}")
+				    ("\\subsubsection{%s}" . "\\subsubsection*{%s}")
+				    ("\\paragraph{%s}" . "\\paragraph*{%s}")
+				    ("\\subparagraph{%s}" . "\\subparagraph*{%s}")))
+  (setq org-latex-pdf-process '("xelatex -interaction nonstopmode -output-directory %o %f"
+				"xelatex -interaction nonstopmode -output-directory %o %f"
+				"xelatex -interaction nonstopmode -output-directory %o %f"))
+  (setq org-startup-indented t))
+(my-org-mode-config)
+(defun my-tex-mode-config ()
+  (setq tex-compile-commands '(("xelatex %r")))
+  (setq tex-command "xelatex")
+  (setq-default TeX-engine 'xelatex))
+(my-tex-mode-config)
+#+END_SRC
+** 发布
+Org 包含一个发布管理系统，可以配置一个由相互链接的 Org 文件组成的工程项目的自动向 HTML 转换。你也可以设置 Org，将导出的 HTML 页面和相应的附件如图片，源代 码文件等自动上传到服务器。
+
+下面是一个例子：
+#+BEGIN_SRC emacs-lisp
+(setq org-publish-project-alist
+     '(("org"
+        :base-directory "~/org/"
+        :publishing-directory "~/public_html"
+        :section-numbers nil
+        :table-of-contents nil
+        :style "<link rel=\"stylesheet\"
+               href=\"../other/mystyle.css\"
+               type=\"text/css\"/>")))
+#+END_SRC
+发布相关的命令：
+| 命令      | 说明                               |
+|-----------+------------------------------------|
+| C-c C-e C | 提示指明一个项目，将所有的文件发布 |
+| C-c C-e P | 发布包含当前文件的项目             |
+| C-c C-e F | 只发布当前文件                     |
+| C-c C-e E | 发布所有项目                       |
+Org 用时间戳来查看文件是否改变。上面的命令只发布修改过的文件。你可以给它们加上前缀来强制重新发布所有的文件。
+
+
