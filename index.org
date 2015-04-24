@@ -1,3 +1,5 @@
+#+AUTHOR: Li Pengcheng
+#+EMAIL: lpc1983@gmail.com
 #+TITLE: 首页
 
 从nikola 迁移到 Kelvin 的 org-page
