@@ -1,7 +1,7 @@
 #+TITLE:       Emacs 安装 irony (On Mac OS X)
 #+AUTHOR:      Li Pengcheng
 #+EMAIL:       lpc1983@gmail.com
-#+DATE:        2014-09-27 13:12:30 UTC+08:00
+#+DATE:        2014-09-27 Sat 
 #+URI:         /blog/%y/%m/%d/install-irony-on-mac-os-x
 #+KEYWORDS:    <TODO: insert your keywords here>
 #+TAGS:        技术随笔
