@@ -4,10 +4,24 @@
     <title>Pengcheng的点点滴滴</title>
     <link>http://blog.lpch.me</link>
     <description>路漫漫</description>
-    <pubDate>Fri, 24 Apr 2015 14:43:21 CST</pubDate>
-    <lastBuildDate>Fri, 24 Apr 2015 14:43:21 CST</lastBuildDate>
+    <pubDate>Fri, 24 Apr 2015 16:02:32 CST</pubDate>
+    <lastBuildDate>Fri, 24 Apr 2015 16:02:32 CST</lastBuildDate>
     <docs>http://www.rssboard.org/rss-specification</docs>
     <generator>Org-page static site generator (https://github.com/kelvinh/org-page)</generator>
+    <item>
+      <title>Emacs 安装 irony (On Mac OS X)</title>
+      <link>http://blog.lpch.me/blog/2014/09/27/install_irony-on-mac-os-x</link>
+      <description>Emacs 安装 irony (On Mac OS X)</description>
+      <pubDate>2015-04-24</pubDate>
+      <guid>http://blog.lpch.me/blog/2014/09/27/install_irony-on-mac-os-x</guid>
+    </item>
+    <item>
+      <title>lua 笔记</title>
+      <link>http://blog.lpch.me/blog/2014/08/20/lua-笔记</link>
+      <description></description>
+      <pubDate>2015-04-24</pubDate>
+      <guid>http://blog.lpch.me/blog/2014/08/20/lua-笔记</guid>
+    </item>
     <item>
       <title>org学习笔记</title>
       <link>http://blog.lpch.me/blog/2014/04/16/org学习笔记</link>
