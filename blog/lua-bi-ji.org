@@ -1,0 +1,1694 @@
+#+TITLE:       lua 笔记
+#+AUTHOR:      Li Pengcheng
+#+EMAIL:       lpc1983@gmail.com
+#+DATE:        2014-08-20 20:11:06 UTC+08:00
+#+URI:         /blog/%y/%m/%d/lua-笔记
+#+KEYWORDS:    <TODO: insert your keywords here>
+#+TAGS:        学习笔记
+#+LANGUAGE:    AUTO
+#+OPTIONS:     H:3 num:nil toc:nil \n:nil ::t |:t ^:nil -:nil f:t *:t <:t
+#+DESCRIPTION: <TODO: insert your description here>
+#+STARTUP: indent
+#+OPTIONS: toc:t ^:{}
+* Part I: The Language
+** 开始
+Hello World
+#+BEGIN_SRC lua
+print("Hello World")
+#+END_SRC
+把上边代码放入hello.lua
+直接使用lua解释器运行
+#+BEGIN_SRC shell
+lua hello.lua 
+#+END_SRC
+
+factorial 数列
+#+BEGIN_SRC lua
+function fact (n)
+  if n == 0 then
+    return 1
+  else
+    return n * fact(n-1)
+end end
+print("enter a number:")
+a = io.read("*n")
+print(fact(a))function fact (n)
+#+END_SRC
+
+*** Chunks
+每个Lua可执行代码块, 例如一个文件，交互模式的一行，叫做chunk
+#+BEGIN_SRC lua
+a = 1
+b = a * 2
+a = 1;
+b = a * 20
+a = 1; b = a * 2
+a = 1 b = a * 2 -- 难看的，但是有效的
+#+END_SRC
+无参数调用直接进入交互模式
+#+BEGIN_SRC lua
+lua
+#+END_SRC
+加-i 参数运行给定chunk后进入交互模式
+#+BEGIN_SRC lua
+lua -i prog
+#+END_SRC
+退出交互模式，或者在程序中退出
+#+BEGIN_SRC lua
+os.exit()
+#+END_SRC
+定义一个文件lib1.lua 包含以下内容
+#+BEGIN_SRC lua
+function norm (x, y)
+  return (x^2 + y^2)^0.5
+end
+
+function twice (x)
+  return 2*x
+end
+#+END_SRC
+在交互模式中
+#+BEGIN_SRC shell
+> dofile("lib1.lua")   -- 装载你定义的库
+> n = norm(3.4, 1.0)
+> print(twice(n))
+#+END_SRC
+
+*** 一些语言约定
+标识符(Identifiers) 任意非数字开头的字母，数字，下划线组成的字符串
+例如：
+#+BEGIN_SRC lua
+i   j   i10  _ij
+aSomewhatLongName _INPUT
+#+END_SRC
+下划线开始的标识符，有些是lua保留的(例如: _VERSION)
+以下保留关键字
+#+BEGIN_SRC lua
+     and       break     do        else      elseif
+     end       false     goto      for       function
+     if        in        local     nil       not
+     or        repeat    return    then      true
+     until     while
+#+END_SRC
+(--) 注释开始，直到行结束
+#+BEGIN_SRC lua
+--[[
+块注释
+--]]
+#+END_SRC
+
+*** 全局变量
+不需要任意修饰符
+例如 b = 10  b便是全局变量
+*** 独立解释器
++ 可执行脚本
+  UNIX系统：
+  #+BEGIN_SRC shell
+  #!/usr/local/bin/lua ## lua 解释器必须安装在 /usr/local/bin
+  或者使用
+  #!/usr/bin/env lua
+  #+END_SRC
++ lua 解释器用法
+  lua [options] [scritps [args]]
+  + -l 装载库
+    % lua -l fact
+  + -e 选项 直接在控制台输入lua代码
+    % lua -e "print(math.sin(12))" --> -0.53657291800043
+  + -i 执行完其他参数后进入交互模式
+    % lua -i -llib -e "x = 10"
++ 你可以在交互模式打印任何内容 = 便可，相当于return
+  #+BEGIN_SRC shell
+  > = math.sin(3)            --> 0.14112000805987
+  > a = 30
+  > = a                      --> 30 
+  #+END_SRC
++ 传递给脚本的参数
+  % lua -e "sin=math.sin" script a b
+  #+BEGIN_SRC 
+  arg[-3] = "lua"
+  arg[-2] = "-e"
+  arg[-1] = "sin=math.sin"
+  arg[0] = "script"
+  arg[1] = "a"
+  arg[2] = "b"arg[-3]
+  #+END_SRC
+** 类型和值
+Lua 是一种动态类型语言
+#+BEGIN_SRC lua
+print(type("Hello world"))  --> string
+print(type(10.4*3))         --> number   
+print(type(print))          --> function 
+print(type(type))           --> function 
+print(type(true))           --> boolean  
+print(type(nil))            --> nil      
+print(type(type(X)))        --> string   
+#+END_SRC 
+fucntions 在lua中是一等公民，可以像值一样处理它。
+*** Nil
+Lua 使用nil作为一种不存在的值
+*** Booleans
+两种值 *false* , *true* . *false* 和 nil 为假(false), 其他都为真(true).
+*注意*: lua 数字0 为真
+*** Numbers
+双精度浮点数， Lua 没有整型(Integer Type).
+*注意*：虽然没有Integer类型，但是可以安全的处理32位的整型数不会产生浮点摄入精度问题。
+#+BEGIN_SRC lua
+4     0.4     4.57e-3     0.3e12     5E+20
+#+END_SRC 
+0x 开始表示16进制数，可以使用('p' 或 'P')表示二进制指数
+#+BEGIN_SRC lua
+0xff (255)     0x1A3 (419)     0x0.2 (0.125)    0x1p-1 (0.5)
+0xa.bp2 (42.75)
+#+END_SRC
+*** Strings
+字符串在Lua中是不可变的值(immutable values)，你不可以改变其中字符的值。每次对字符串的修改都会产生个新的值。
+Lua字符串甚至可以保存二进制数据
+你可以在前端加上'#'获得字符串长度
+#+BEGIN_SRC lua
+a = "hello"
+print(#a)             --> 5
+print(#"good\0bye")   --> 8
+#+END_SRC
+
+*Literal strings*
+#+BEGIN_SRC lua
+a = "a line"
+b = 'another line'
+#+END_SRC 
+转意
+| 转意符 |                 |
+|--------+-----------------|
+| \a     | bell            |
+| \b     | back space      |
+| \f     | form feed       |
+| \n     | newline         |
+| \r     | carriage return |
+| \t     | horizontal tab  |
+| \v     | vertical tab    |
+| \\     | backslash       |
+| \"     | double quote    |
+| \'     | single quote    |
+
+*Long strings*
+#+BEGIN_SRC lua
+page = [[
+<html>
+<head>
+  <title>An HTML Page</title>
+</head>
+<body>
+  <a href="http://www.lua.org">Lua</a>
+</body>
+</html>
+]]
+write(page)
+#+END_SRC
+如果字符串中间包含[[]]使用 [=[xxxx]=]
+
+*Coercions*
+#+BEGIN_SRC lua       
+print("10" + 1)       --> 11                            
+print("10 + 1")       -->10+1                           
+print("-5.3e-10"*"2") --> -1.06e-09                     
+print("hello" + 1)    -- ERROR (cannot convert "hello") 
+print(10 .. 20)       --> 1020
+#+END_SRC
+tonumber 把字符串转换成数字， 无法转换则返回nil
+tostring 把数字转换成字符串
+*** Tables
+table类型是使用联合数组实现的类似map
+#+BEGIN_SRC lua
+a = {}           -- create a table and store its reference in 'a'
+k = "x"
+a[k] = 10        -- new entry, with key="x" and value=10
+a[20] = "great"  -- new entry, with key=20 and value="great"
+print(a["x"])    --> 10
+k = 20
+print(a[k])      --> "great"
+a["x"] = a["x"] + 1     -- increments entry "x"
+print(a["x"])    --> 11
+#+END_SRC
+*注意*: a[x] 使用x的值作为key
+#+BEGIN_SRC 
+a.x = 10      -- same as a["x"] = 10   
+print(a.x)    -- same as print(a["x"]) 
+print(a.y)    -- same as print(a["y"]) 
+#+END_SRC 
+*注意* a.x 使用"x"字符串作为key
+*** Functions
+函数在lua中是一等公民(first-class)，可以作为值来传递
+可以调用Lua和C写的函数，所有Lua标准库是用C实现的.
+*** Userdata 和 Threads
+任意C数据可以被存储在Lua变量中
+** 表达式
+*** 算数运算
+| 算数运算符 |                |
+|------------+----------------|
+| +          | addition       |
+| -          | subtraction    |
+| *          | multiplication |
+| /          | devision       |
+| ^          | exponentiation |
+| %          | modulo         |
+| -          | negation       |
+*** 关系运算
+| 关系运算符 |          |
+|------------+----------|
+| <          | 小于     |
+| >          | 大于     |
+| <=         | 小于等于 |
+| >=         | 大于等于 |
+| ==         | 等于     |
+| ~=         | 不等于   |
+*** 逻辑运算
+| 逻辑运算符 |    |
+|------------+----|
+| and        | 与 |
+| or         | 或 |
+| not        | 非 |
+*** 连接
+#+BEGIN_SRC lua
+print("Hello " .. "World")  --> Hello World
+print(0 .. 1)               --> 01
+print(000 .. 01)            --> 01
+a = "Hello"
+print(a .. " World")   --> Hello World
+print(a)               --> Hello
+#+END_SRC
+*** 取长度
+#+BEGIN_SRC lua 
+print(a[#a])          -- prints the last value of sequence 'a'
+a[#a] = nil           -- removes this last value              
+a[#a + 1] = v         -- appends 'v' to the end of the list   
+#+END_SRC
+*注意* lua index是从1开始的
+*** 优先级
+| ^               | 高 |
+| not # - (unary) |    |
+| + -             |    |
+| ..              |    |
+| < > <= >= ~= == |    |
+| and             |    |
+| or              | 低 |
+
+#+BEGIN_SRC lua
+a+i < b/2+1          <-->  (a+i) < ((b/2)+1)
+5+x^2*8              <-->  5+((x^2)*8)
+a < y and y <= z     <-->  (a<y)and(y<=z)
+-x^2                 <--> -(x^2)  
+x^y^z                <--> x^(y^z) 
+#+END_SRC
+*** 构造表
+#+BEGIN_SRC 
+days = {"Sunday", "Monday", "Tuesday", "Wednesday",
+             "Thursday", "Friday", "Saturday"}
+
+a = {x=10, y=20} -- same as 
+a = {}; a.x=10; a.y=20
+
+polyline = {color="blue",
+            thickness=2,
+            npoints=4,
+            {x=0,   y=0}, -- polyline[1] 
+            {x=-10, y=0}, -- polyline[2] 
+            {x=-10, y=1}, -- polyline[3] 
+            {x=0,   y=1}  -- polyline[4] 
+}
+a = {[1]="red", [2]="green", [3]="blue",}
+#+END_SRC
+** 程序语句
+*** 赋值
+#+BEGIN_SRC lua
+a = "hello" .. "world"
+t.n = t.n + 1
+a, b = 10, 2*x
+x, y = y, x            -- swap 'x' for 'y'
+#+END_SRC
+*** 本地变量和块
+默认全局变量，local 修饰符本底变量
+#+BEGIN_SRC lua
+j = 10         -- global variable
+local i = 1    -- local variable
+#+END_SRC
+*do* 块 类似c中大括号
+#+BEGIN_SRC lua
+do
+  local a2 = 2*a
+  local d = (b^2 - 4*a*c)^(1/2)
+  x1 = (-b + d)/a2
+  x2 = (-b - d)/a2
+end 
+#+END_SRC
+*** 流程控制语句
+*if then else*
+#+BEGIN_SRC lua
+if a < 0 then a = 0 end
+
+if a < b then return a else return b end
+
+if line > MAXLINES then
+  showpage()
+  line = 0
+end
+
+if op == "+" then 
+  r=a+b
+elseif op == "-" then 
+  r=a-b
+elseif op == "*" then
+  r = a*b
+elseif op == "/" then
+  r = a/b
+else
+  error("invalid operation")
+end
+#+END_SRC
+Lua 没有 switch
+
+*while*
+#+BEGIN_SRC 
+local i = 1
+while a[i] do
+  print(a[i])
+  i=i+1 
+end
+#+END_SRC
+
+*repeat*
+#+BEGIN_SRC 
+repeat
+  line = io.read()
+until line ~= ""
+#+END_SRC
+
+*Numeric for*
+#+BEGIN_SRC 
+for var = exp1, exp2, exp3 do
+  <something> 
+end
+#+END_SRC
+exp3 表示步进
+如果想无限循环， 使用math.huge
+
+*Generic for*
+#+BEGIN_SRC lua
+-- print all values of table 't'
+     for k, v in pairs(t) do print(k, v) end
+#+END_SRC
+*** break, return, and goto
+break return 和c语言用法一样，但是Lua return 可以返回多个值
+goto 在现代编程范式中并不建议使用，除非是迫不得已的情况
+#+BEGIN_SRC lua
+while some_condition do
+  ::redo::
+  if some_other_condition then 
+    goto continue 
+  elseif yet_another_condition then 
+    goto redo 
+  end
+  <some code>
+  ::continue::
+end
+#+END_SRC
+
+#+BEGIN_SRC lua
+::s1:: do
+  local c = io.read(1)
+  if c == '0' then goto s2
+  elseif c == nil then print'ok'; return
+  else goto s1
+  end
+end
+#+END_SRC
+** 函数
+#+BEGIN_SRC lua
+function f (a, b) print(a, b) end
+
+f(3)         --> 3      nil                     
+f(3, 4)      --> 3      4                       
+f(3, 4, 5)   --> 3      4      (5 is discarded) 
+#+END_SRC
+
+*** 多返回值
+#+BEGIN_SRC lua
+function foo0 () end                 -- returns no results
+function foo1 () return "a" end      -- returns 1 result  
+function foo2 () return "a", "b" end -- returns 2 results 
+
+x,y = foo2()       -- x="a", y="b"            
+x = foo2()         -- x="a", "b" is discarded 
+x,y,z = 10,foo2()  -- x=10, y="a", z="b"      
+
+#+END_SRC
+(f(x)) 仅仅只会返回一个值
+
+table.unpack 从一个数组中返回多个值 *Lua5.2*
+#+BEGIN_SRC lua
+print(table.unpack{10, 20, 30}) -> 10  20 30
+a, b = table.unpack{10, 20, 30}   -- a = 10, b = 20, 30 is discarded
+#+END_SRC
+通常 unpack 返回数组中所有元素， 但是你可以指定返回的元素，*下标从1开始*
+#+BEGIN_SRC lua
+print(table.unpack({"Sun", "Mon", "Tue", "Wed"}, 2, 3))
+  --> Mon    Tue
+#+END_SRC 
+使用Lua实现的unpack
+#+BEGIN_SRC lua
+function unpack (t, i, n)
+  i = i or 1
+  n = n or #t
+  if i <= n then
+    return t[i], unpack(t, i + 1, n)
+  end
+end
+#+END_SRC
+
+*** 多样的函数
+三个连续的点(...)可以提供一个参数列表 ， {...} 可以吧所有参数转换成一个数列(array)
+#+BEGIN_SRC lua
+function add (...)
+  local s = 0
+  for i, v in ipairs{...} do
+s=s+v end
+return s end
+print(add(3, 4, 10, 25, 12))
+--> 54
+#+END_SRC
+table.pack(...) 和{...} 类似， 但是有个额外的"n"来存储其其参数列表个数
+通常{...}更快
+
+*** 命名参数
+Lua 并不直接支持命名参数，但是可以使用table实现类似的语句结构
+#+BEGIN_SRC lua
+-- invalid code
+rename(old="temp.lua", new="temp1.lua")  --这种结构并不支持
+
+rename{old="temp.lua", new="temp1.lua"}
+function rename (arg)
+  return os.rename(arg.old, arg.new)
+end
+#+END_SRC
+** 更多的函数内容
+在Lua中函数是一等公民,函数可以赋值个一个变量, 作为参数传递，可以作为返回值
+#+BEGIN_SRC lua
+a = {p = print}
+a.p("Hello World")   --> Hello World                           
+print = math.sin     -- 'print' now refers to the sine function
+a.p(print(1))        --> 0.841470                              
+sin = a.p            -- 'sin' now refers to the print function 
+sin(10, 20)          --> 10      20                            
+#+END_SRC
+*** 闭包
+#+BEGIN_SRC lua
+names = {"Peter", "Paul", "Mary"}
+grades = {Mary = 10, Paul = 7, Peter = 8}
+table.sort(names, function (n1, n2)
+  return grades[n1] > grades[n2]        -- compare the grades
+end)
+#+END_SRC
+*** 非全局函数
+我们可以把函数存储在表(table)中
+#+BEGIN_SRC lua
+Lib = {}
+Lib.foo = function (x,y) return x + y end
+Lib.goo = function (x,y) return x - y end
+
+Lib = {
+  foo = function (x,y) return x + y end,
+  goo = function (x,y) return x - y end
+}
+
+Lib = {}
+function Lib.foo (x,y) return x + y end
+function Lib.goo (x,y) return x - y end
+#+END_SRC 
+我们在定义局部变量函数是要特别小心一点
+错误的代码：
+#+BEGIN_SRC lua
+local fact = function (n)
+  if n == 0 then return 1
+    else return n*fact(n-1)   -- buggy
+  end
+end
+#+END_SRC
+return 语句的fact指向的是全局fact，本地fact这是还没有创建
+正确的用法，先声明再赋值
+#+BEGIN_SRC lua
+local fact
+fact = function (n)
+  if n == 0 then return 1
+    else return n*fact(n-1)
+  end
+pend
+#+END_SRC
+或者
+#+BEGIN_SRC lua
+local function foo (<params>) <body> end
+#+END_SRC
+等价与
+#+BEGIN_SRC lua
+local foo; foo = function (<params>) <body> end
+#+END_SRC
+
+*** 恰当的尾调用
+正确的尾调用，我们无需保持栈状态，这是Lua便做了优化
+#+BEGIN_SRC lua
+function f (x)  return g(x)  end
+
+function foo (n)
+       if n > 0 then return foo(n - 1) end
+end
+#+END_SRC
+在尾调用递归中可以大幅度优化性能
+
+** 迭代器和通用for
+*** 迭代器和闭包
+每次调用迭代器返回下一个元素，这就需要我们使用闭包来保持迭代器状态
+#+BEGIN_SRC lua
+function values (t)
+  local i = 0
+  return function ()  i = i + 1; return t[i]  end
+end
+
+t = {10, 20, 30}
+for element in values(t) do
+  print(element)
+end
+#+END_SRC
+*** 通用for的语意
+#+BEGIN_SRC  lua
+for <var-list> in <exp-list> do 
+<Body>
+end
+#+END_SRC
+*** 无状态迭代器
+next(t, nil) 返回t中第一个元组(pair), next(t, k) 返回k(key）下一个元组
+#+BEGIN_SRC lua
+for k, v in next, t do
+  <loop body> 
+end
+#+END_SRC
+这里的状态是由k来保持的
+*** 综合状态的迭代器
+使用table来保持多个状态
+*** 真迭代器
+个人理解意思类似filter吧，早起版本用的比较多
+
+** 编译执行和错误处理
+*** 编译
+源文件可以编译成一种中间代码来加速执行。
+类似dofile, loadfile仅仅加载一个文件，但是不会执行它，仅仅加载并比编译。
+类似dofile的结构：
+#+BEGIN_SRC lua
+function dofile (filename)
+  local f = assert(loadfile(filename))
+  return f()
+end
+#+END_SRC
+我们可以使用assert来确定load file 时没有error产生。当有error产生时, assert 返回nil
+#+BEGIN_SRC lua
+  assert(load(s))()
+#+END_SRC
+*** 预编译代码
+使用luac预编译
+#+BEGIN_SRC shell
+$ luac -o prog.lc prog.lua
+$ lua prog.lc
+#+END_SRC
+*** C代码
+在使用C代码库时，首先我们必须把它们链接到我们的应用中
+#+BEGIN_SRC lua
+local path = "/usr/local/lib/lua/5.1/socket.so"
+local f = package.loadlib(path, "luaopen_socket")
+#+END_SRC
+这里不会执行C 函数，仅仅把它们转换成Lua 函数。大多时候我们使用require加载C库
+*** 错误处理
+可以使用error函数抛出一个error
+#+BEGIN_SRC lua
+print "enter a number:"
+n = io.read("*n")
+if not n then error("invalid input") end
+-- 使用assert更优雅的方式
+n = assert(io.read("*n"), "invalid input")
+-- 或者
+assert(tonumber(n), "invalid input: " .. n .. " is not a number")
+#+END_SRC
+*** 错误处理和异常
+如果需要在Lua中处理errors, 必须调用pcall(protected call)来封装代码
+可以使用table来封装错误信息，例如error code
+#+BEGIN_SRC lua
+local ok, msg = pcall(function ()
+          <some code>
+          if unexpected_condition then error() end
+          <some code>
+          print(a[i]) -- potential error: 'a' may not be a table <some code>
+        end)
+if ok then    -- no errors while running protected code
+  <regular code>
+else -- protected code raised an error: take appropriate action
+  <error-handling code> 
+end
+
+local status, err = pcall(function () error({code=121}) end)
+     print(err.code)  --> 121
+#+END_SRC
+*** 错误调用栈信息
+使用debug 库
+debug.debug 查看当前程序运行状态
+debug.traceback 查看错误栈
+
+** 协同程序
+类似thread, 但是线程切换开销很大。使用coroutines, 不同task之间切换开销很小。
+*** 协同程序基础
+所有的相关函数都在corutine表中
+创建thread
+#+BEGIN_SRC lua
+co = coroutine.create(function () print("hi") end)
+print(co)   --> thread: 0x8071d98
+#+END_SRC
+coroutine 有四中状态suspended, running, dead, and normal
+#+BEGIN_SRC lua
+print(coroutine.status(co))   --> suspended
+#+END_SRC
+改变状态suspended到runing
+#+BEGIN_SRC lua
+coroutine.resume(co)  ->hi
+#+END_SRC
+之后coroutine state 为dead
+强大的yield函数,yield 会堵塞当前线程
+#+BEGIN_SRC lua
+co = coroutine.create(function ()
+       for i = 1, 10 do
+         print("co", i)
+         coroutine.yield()
+       end
+     end)
+coroutine.resume(co)          --> co   1
+print(coroutine.status(co))   --> suspended
+coroutine.resume(co)          --> co   2
+coroutine.resume(co)          --> co   3
+  ...
+coroutine.resume(co)          --> co   10
+coroutine.resume(co)          -- prints nothing
+-- 再次调用返回false和一个error消息
+print(coroutine.resume(co))   --> false   cannot resume dead coroutine
+#+END_SRC
+可以使用yield在controutine间传递值
+获取controutine返回的值
+#+BEGIN_SRC lua
+co = coroutine.create(function (a,b)
+       coroutine.yield(a + b, a - b)
+     end)
+print(coroutine.resume(co, 20, 10))  --> true  30  10
+#+END_SRC
+向controutine传递值
+#+BEGIN_SRC lua
+co = coroutine.create (function (x)
+       print("co1", x)
+       print("co2", coroutine.yield())
+     end)
+coroutine.resume(co, "hi")     --> co1  hi
+coroutine.resume(co, 4, 5)     --> co2  4  5
+#+END_SRC
+
+#+BEGIN_SRC lua
+co = coroutine.create(function ()
+       return 6, 7
+     end)
+print(coroutine.resume(co))   --> true  6  7
+#+END_SRC
+*** 管道和过滤器
+生产者消费者模式一种常用的并发编程范式
+一个函数产生值（例如从一个文件读取内容）
+另一个函数消费这些值（例如把这些内容写入到文件中）
+例如
+#+BEGIN_SRC lua
+function receive (prod)
+  local status, value = coroutine.resume(prod)
+  return value
+end
+
+function send (x)
+  coroutine.yield(x)
+end
+
+function producer ()
+  return coroutine.create(function ()
+    while true do
+      local x = io.read()  -- produce new value
+      send(x)
+    end 
+  end)
+end
+
+function filter (prod)
+  return coroutine.create(function ()
+    for line = 1, math.huge do
+      local x = receive(prod)   -- get new value
+      x = string.format("%5d %s", line, x)
+      send(x)      -- send it to consumer
+    end 
+  end)
+end
+
+function consumer (prod)
+  while true do
+    local x = receive(prod) -- get new value
+    io.write(x, "\n") -- consume new value
+  end
+end
+
+consumer(filter(producer))
+#+END_SRC
+如果你很熟悉Unix pipes，上边的编程范式感觉并不陌生。
+*** 把协同程序作为迭代器
+coroutine.wrap 和coroutine.create类似，但是它返回一个函数，当我们调用此函数时类似对所创建的coroutine执行
+resume， 但不会返回状态信息，也无法检测运行时错误。
+#+BEGIN_SRC lua
+function permgen (a, n)
+     n = n or #a          -- default for 'n' is size of 'a'
+     if n <= 1 then       -- nothing to change?
+       coroutine.yield(a)
+     else
+       for i = 1, n do
+         -- put i-th element as the last one
+         a[n], a[i] = a[i], a[n]
+         -- generate all permutations of the other elements
+         permgen(a, n - 1)
+         -- restore i-th element
+         a[n], a[i] = a[i], a[n]
+       end 
+     end
+end
+
+function permutations(a)
+  return coroutine.wrap(function () permgen(a) end)
+end
+
+function printResult (a)
+   for i = 1, #a do
+      io.write(a[i], " ")
+   end
+   io.write("\n")
+end
+
+for p in permutations{"a", "b", "c"} do 
+  printResult(p)
+end
+--> b c a
+--> c b a
+--> c a b
+--> a c b
+--> b a c
+--> a b c
+#+END_SRC
+*** 非抢占式多线程
+我们来实现一个多线程下载程序，socket库需要我们自己安装
+#+BEGIN_SRC lua
+local socket = require "socket"
+
+function download (host, file)
+   local c = assert(socket.connect(host, 80))
+   local count = 0    -- counts number of bytes read
+   c:send("GET " .. file .. " HTTP/1.0\r\n\r\n")
+   while true do
+      local s, status = receive(c)
+      count = count + #s
+      if status == "closed" then break end
+   end
+   c:close()
+   print(file, count)
+end
+   
+function receive (connection)
+   connection:settimeout(10)
+   local s, status, partial = connection:receive(2^10)
+   if status == "timeout" then
+      coroutine.yield(connections)
+   end
+   return s or partial, status
+end
+
+threads = {} -- list of all live threads
+function get (host, file)
+   -- create coroutine
+   local co = coroutine.create(function ()
+         download(host, file)
+   end)
+   -- insert it in the list
+   table.insert(threads, co)
+end
+
+function dispatch ()
+   local i = 1
+   local timedout = {}
+   while true do
+      if threads[i] == nil then
+         if threads[1] == nil then break end
+         i = 1                     -- restart the loop
+         timedout = {}
+      end
+      local status, res = coroutine.resume(threads[i])
+      if not res then    -- thread finished its task?
+         table.remove(threads, i)
+      else               -- time out
+         i=i+1
+         timedout[#timedout + 1] = res
+         if #timedout == #threads then
+            socket.select(timedout)
+         end
+      end
+   end
+end
+
+
+host = "www.w3.org"
+get(host, "/TR/html401/html40.txt")
+get(host, "/TR/2002/REC-xhtml1-20020801/xhtml1.pdf")
+get(host, "/TR/REC-html32.html")
+get(host, "/TR/2000/REC-DOM-Level-2-Core-20001113/DOM2-Core.txt")
+dispatch()   -- main loop
+#+END_SRC
+
+* Part II: Table and Objects
+** 数据结构
+*** 数组
+Lua中把table作为Array只不过index为integers.
+*** 矩阵多维数组
++ 第一种方式多维嵌套的
+  #+BEGIN_SRC lua
+mt={}
+for i = 1, N do
+  mt[i] = {}
+  for j = 1, M do
+    mt[i][j] = 0
+  end
+end
+#+END_SRC
++ 第二种方式本质上还是一维的
+  #+BEGIN_SRC lua
+  mt = {} -- create the matrix 
+  for i = 1, N do
+    for j = 1, M do
+      mt[(i - 1)*M + j] = 0
+    end 
+  end
+  #+END_SRC
+  
+*** 链表
+#+BEGIN_SRC lua
+list = nil
+list = {next = list, value = v}
+local l = list
+  while l do
+    <visit l.value>
+    l = l.next 
+end
+#+END_SRC
+*** 队列和双队列
+#+BEGIN_SRC lua
+List = {}
+function List.new ()
+  return {first = 0, last = -1}
+     end
+function List.pushfirst (list, value)
+       local first = list.first - 1
+       list.first = first
+       list[first] = value
+end
+function List.pushlast (list, value)
+  local last = list.last + 1
+  list.last = last
+  list[last] = value
+end
+function List.popfirst (list)
+  local first = list.first
+  if first > list.last then error("list is empty") end
+  local value = list[first]
+  list[first] = nil        -- to allow garbage collection
+  list.first = first + 1
+  return value
+end
+function List.poplast (list)
+  local last = list.last
+  if list.first > last then error("list is empty") end
+  local value = list[last]
+  list[last] = nil         -- to allow garbage collection
+  list.last = last - 1
+  return value
+end
+#+END_SRC
+*** 集合和包
+Set把table的key作为存储， 其值为true
+#+BEGIN_SRC lua
+reserved = {
+  ["while"] = true,     ["end"] = true,
+  ["function"] = true,  ["local"] = true,
+}
+for w in allwords() do
+  if not reserved[w] then
+  <do something with ’w’> end
+end
+
+
+function Set (list)
+  local set = {}
+  for _, l in ipairs(list) do set[l] = true end
+  return set
+end
+reserved = Set{"while", "end", "function", "local", }
+#+END_SRC
+Bag和set不同其值可以出现多次，类似set把table的key作为存储， 其值为count
+#+BEGIN_SRC lua
+function insert (bag, element)
+  bag[element] = (bag[element] or 0) + 1
+end
+function remove (bag, element)
+  local count = bag[element]
+  bag[element] = (count and count > 1) and count - 1 or nil
+end
+#+END_SRC
+*** 缓存字符串
+拼接字符串，大数据处理时代价相当高
+#+BEGIN_SRC lua
+local buff = ""
+for line in io.lines() do
+  buff = buff .. line .. "\n"
+end
+#+END_SRC
+
+使用table.concat(t)函数
+#+BEGIN_SRC lua
+local t = {}
+for line in io.lines() do
+  t[#t + 1] = line .. "\n"
+end
+local s = table.concat(t)
+
+local t = {}
+     for line in io.lines() do
+       t[#t + 1] = line
+     end
+     s = table.concat(t, "\n") .. "\n"
+#+END_SRC
+*** 图
+#+BEGIN_SRC lua
+local function name2node (graph, name)
+  local node = graph[name]
+  if not node then
+    -- node does not exist; create a new one
+    node = {name = name, adj = {}}
+    graph[name] = node
+  end
+  return node
+end
+
+function readgraph ()
+  local graph = {}
+  for line in io.lines() do
+    -- split line in two names
+    local namefrom, nameto = string.match(line, "(%S+)%s+(%S+)")
+    -- find corresponding nodes
+    local from = name2node(graph, namefrom)
+    local to = name2node(graph, nameto)
+    -- adds 'to' to the adjacent set of 'from'
+    from.adj[to] = true
+  end
+  return graph
+end
+
+function findpath (curr, to, path, visited)
+  path = path or {}
+  visited = visited or {}
+  if visited[curr] then   -- node already visited?
+    return nil            -- no path here         
+  end
+  visited[curr] = true    -- mark node as visited 
+  path[#path + 1] = curr  -- add it to path       
+  if curr == to then      -- final node?          
+    return path
+  end
+  -- try all adjacent nodes
+  for node in pairs(curr.adj) do
+    local p = findpath(node, to, path, visited)
+    if p then return p end
+  end
+  path[#path] = nil         -- remove node from path
+end
+function printpath (path)
+  for i = 1, #path do
+    print(path[i].name)
+  end
+end
+g = readgraph()
+a = name2node(g, "a")
+b = name2node(g, "b")
+p = findpath(a, b)
+if p then printpath(p) end
+#+END_SRC
+** 数据文件和持久化
+*** 数据文件
+通常我们使用csv, xml存储数据文件，这里我们直接使用lua代码
+例如一个data文件:
+#+BEGIN_SRC lua
+Entry{
+  author = "Donald E. Knuth",
+  title = "Literate Programming",
+  publisher = "CSLI",
+  year = 1992
+}
+Entry{
+  author = "Jon Bentley",
+  title = "More Programming Pearls",
+  year = 1990,
+  publisher = "Addison-Wesley",
+}
+#+END_SRC
+*Entry{code} is same as Entry({code})*
+直接使用dofile读取
+#+BEGIN_SRC lua
+local authors = {}      -- a set to collect authors
+function Entry (b)
+  if b.author then authors[b.author] = true end
+end
+dofile("data")
+for name in pairs(authors) do print(name) end
+#+END_SRC
+*** 序列化
+*小心处理字符串转义和table循环引用*
+#+BEGIN_SRC lua
+function basicSerialize (o)
+  if type(o) == "number" then
+    return tostring(o)
+  else   -- assume it is a string
+    return string.format("%q", o)
+  end
+end
+function save (name, value, saved)
+  saved = saved or {}
+  io.write(name, " = ")
+  if type(value) == "number" or type(value) == "string" then
+    io.write(basicSerialize(value), "\n")
+  elseif type(value) == "table" then
+    if saved[value] then                  -- value already saved?  
+      io.write(saved[value], "\n")        -- use its previous name 
+    else
+      saved[value] = name                 -- save name for next time 
+      io.write("{}\n")                    -- create a new table      
+      for k,v in pairs(value) do          -- save its fields         
+        k = basicSerialize(k)
+        local fname = string.format("%s[%s]", name, k)
+        save(fname, v, saved)
+      end 
+    end
+  else
+    error("cannot save a " .. type(value))
+  end 
+end
+#+END_SRC
+** 元数据表和元数据方法
+使用Metatales我们可以实现运算符重载
+*Metatalbe仅仅用在table中* 其他类型我们必须使用c代码实现
+#+BEGIN_SRC lua
+t = {}
+print(getmetatable(t))   --> nil
+t1 = {}
+setmetatable(t, t1)
+print(getmetatable(t) == t1)   --> true
+#+END_SRC
+使用metable 添加Metamethods
+#+BEGIN_SRC lua
+local mt = {}    -- metatable for sets
+function Set.new (l)   -- 2nd version
+  local set = {}
+  setmetatable(set, mt)
+  for _, v in ipairs(l) do set[v] = true end
+  return set
+end
+mt.__add = Set.union
+mt.__mul = Set.intersection
+Set = {}
+   -- create a new set with the values of a given list
+function Set.new (l)
+  local set = {}
+  for _, v in ipairs(l) do set[v] = true end
+  return set
+end
+function Set.union (a, b)
+  if getmetatable(a) ~= mt or getmetatable(b) ~= mt then
+    error("attempt to 'add' a set with a non-set value", 2)
+  end
+  local res = Set.new{}
+  for k in pairs(a) do res[k] = true end
+  for k in pairs(b) do res[k] = true end
+  return res
+end
+function Set.intersection (a, b)
+  if getmetatable(a) ~= mt or getmetatable(b) ~= mt then
+    error("attempt to 'add' a set with a non-set value", 2)
+  end
+  local res = Set.new{}
+  for k in pairs(a) do
+    res[k] = b[k]
+  end
+  return res
+end
+-- presents a set as a string
+function Set.tostring (set)
+  local l = {}     -- list to put all elements from the set
+  for e in pairs(set) do
+    l[#l + 1] = e
+  end
+  return "{" .. table.concat(l, ", ") .. "}"
+end
+-- print a set
+function Set.print (s)
+  print(Set.tostring(s))
+end
+#+END_SRC
+*** 算数元方法
+| Metamethods | Operation |
+|-------------+-----------|
+| __add       | +         |
+| __mul       | *         |
+| __sub       | -         |
+| __div       | /         |
+| __unm       | -         |
+| __mod       | %         |
+| __pow       | ^         |
+| __concat    | ..        |
+*** 关系元方法
+| Metamethods | Operation |
+|-------------+-----------|
+| __eq        | ==        |
+| __lt        | <         |
+| __le        | <=        |
+其他的Lua转换 a~=b 到 not(a==b), a>b 到 b<a，和 a>=b 到b<=a
+*** 库定义的方法
+__tostring
+*** Table-Access Metamethods
+__index, __newindex
+** 环境
+所有的全局变量在 _G (_G._G equal to _G)table中存储
+*** 动态命名的全局变量
+使用table来访问全局变量
+value = _G[varname]
+#+BEGIN_SRC lua
+function getfield (f)
+  local v = _G    -- start with the table of globals
+  for w in string.gmatch(f, "[%w_]+") do
+    v = v[w] 
+  end
+  return v 
+end
+function setfield (f, v)
+  local t = _G            -- start with the table of globals
+  for w, d in string.gmatch(f, "([%w_]+)(%.?)") do
+    if d == "." then
+      t[w] = t[w] or {}
+      t = t[w]
+    else
+      t[w] = v
+    end 
+  end
+end
+#+END_SRC
+*** 全局变量声明
+全部变量不需要声明，但有时引起的bug很难找，我们可以使用metatable改变默认行为
+#+BEG
+setmetatable(_G, {
+  __newindex = function (_, n)
+    error("attempt to write to undeclared variable " .. n, 2)
+  end,
+  __index = function (_, n)
+    error("attempt to read undeclared variable " .. n, 2)
+  end, 
+})
+> print(a)
+     stdin:1: attempt to read undeclared variable a
+function declare (name, initval)
+       rawset(_G, name, initval or false)
+end
+#+END_SRC
+*** 非全局环境
+上一节我们改变里全局变量的默认行为，但是当我们引入一个新库，使用旧有的机制时，边可能产生问题，
+我们可以改变某个库或函数默认的全局变量读取，来解决这个问题
+*** 使用setfenv -- Lua 5.1
+#+BEGIN_SRC lua
+setfenv(1, {}) 空的全局变量
+setfenv(1, {g= _G}) 改变当前环境
+#+END_SRC
+*** 使用_ENV -- Lua 5.2
+创建新的环境变量
+#+BEGIN_SRC lua
+_ENV = {g = {}} -- 新的空的环境变量
+#+END_SRC
+*** _ENV and load
+load 库时使用新的环境
+#+BEGIN_SRC lua
+env = {}
+f = loadfile("config.lua", "t", env)
+f()
+#+END_SRC lua
+debug设置新的环境
+#+BEGIN_SRC 
+f = loadfile(filename)
+p    ...
+env = {}
+debug.setupvalue(f, 1, env)
+#+END_SRC
+loadwithprefix
+#+BEGIN_SRC lua
+f = loadwithprefix("local _ENV = ...;", io.lines(filename, "*L"))
+...
+env = {}
+f(env)
+#+END_SRC
+** 模块和包
+标准库是Modules, 使用 
+#+BEGIN_SRC lua
+socks = require "socks"
+#+END_SRC
++ require 函数
+简单的调用 require "<模块名>"返回由模块函数组成的table.
++ 重命名模块 -- Lua 5.2
+TODO 没理解
++ 搜索路径Path
+LUA_PATH_5_2 > LUA_PATH > compiled-defined default path
+?为通配符
+#+BEGIN_SRC 
+./?.so;/usr/local/lib/lua/5.2/?.so
+#+END_SRC
++ Searchers -- Lua 5.2
+package.searchers
+** 简单定义一个模块
+把模块函数放到一个table中返回便可。
+** 使用环境 -- lua 5.2
+M.add
+#+BEGIN_SRC lu
+local M = {}
+_ENV = M
+function add (c1, c2)
+  return new(c1.r + c2.r, c1.i + c2.i)
+end
+#+END_SRC
+** 子模块和包
+mod.sub sub是mod的子模块
+require "a.b" 查找文件 a_b.lua
+** 面向对象编程
+lua 面向对象和javascript有点像都是使用prototype
+*** 类
+一个类还是一个table, 将其做为新建对象或类的metatable
+#+BEGIN_SRC lua
+Account = {}
+function Account:new (o)
+  o = o or {}     -- create table if user does not provide one
+  setmetatable(o, self)
+  self.__index = self -- 这个是必须的，回顾metatable __index元方法
+  return o
+end
+function Account:deposit (v)
+  self.balance = self.balance + v
+end
+function Account:withdraw (v)
+  if v > self.balance then error"insufficient funds" end
+  self.balance = self.balance - v
+end
+a = Account:new{balance = 0}
+a:deposit(100.00)
+#+END_SRC
+*** 继承
+#+BEGIN_SRC lua
+SpecialAccount = Account:new()
+function SpecialAccount:withdraw (v)
+  if v - self.balance >= self:getLimit() then
+    error"insufficient funds"
+  end
+  self.balance = self.balance - v
+end
+function SpecialAccount:getLimit ()
+  return self.limit or 0
+end
+s = SpecialAccount:new{limit=1000.00}
+#+END_SRC
+*** 多重继承
+#+BEGIN_SRC lua
+Named = {}
+function Named:getname ()
+  return self.name
+end
+function Named:setname (n)
+  self.name = n
+end
+-- look up for 'k' in list of tables 'plist'
+local function search (k, plist)
+  for i = 1, #plist do
+   local v = plist[i][k]
+   if v then return v end
+  end 
+end
+-- try 'i'-th superclass
+function createClass (...)
+  local c = {}        -- new class
+  local parents = {...}
+  -- class will search for each method in the list of its parents
+  setmetatable(c, {__index = function (t, k)
+    local v = search(k, parents)
+    t[k] = v           --improve performance
+    return v
+  end})
+  -- prepare 'c' to be the metatable of its instances
+  c.__index = c
+  -- define a new constructor for this new class
+  function c:new (o)
+    o = o or {}
+    setmetatable(o, c)
+    return o
+  end
+  return c -- return new class
+end
+NameAccount = createClass(Account, Named)
+account = NamedAccount:new{name = "Paul"}
+print(account:getname())     --> Paul
+#+END_SRC
+*** 访问权限
+可以用Local变量变相实现私有成员函数
+*** The Single-Method Approach
+#+BEGIN_SRC lua
+function newObject (value)
+  return function (action, v)
+    if action == "get" then return value
+    elseif action == "set" then value = v
+    else error("invalid action")
+    end
+  end 
+end
+d = newObject(0)
+print(d("get"))   --> 0  
+d("set", 10)      
+print(d("get"))   --> 10         
+#+END_SRC
+** 弱引用tables和 Finalizers
+*** 弱引用table
+我们可以指定table中key，value 或两者都是弱引用，
+其中任意被垃圾回收器删除时，整个条目就会被删除
+使用metatable的__mode 值来表示 
++ __mode = "k" 表示 key 为弱引用
++ __mode = "v" 表示 value 为弱引用
++ __mode = "kv" 表示 key 和 value 都是弱引用
+*** 备忘录(Memoize)函数
+"空间换取时间"提高性能技术, 一种缓存方法
+#+BEGIN_SRC lua
+local results = {}
+setmetatable(results, {__mode = "v"})  -- make values weak
+function createRGB (r, g, b)
+  local key = r .. "-" .. g .. "-" .. b
+  local color = results[key]
+  if color == nil then
+    color = {red = r, green = g, blue = b}
+    results[key] = color
+  end
+  return color
+end
+#+END_SRC
+*** 对象属性(Object Attributes)
+弱引用table另外一项重要应用是将属性与对象关联起来，例如
+我们不想扰乱原table的遍历，把某些属性存储在外部table中(使用弱引用Key)，
+其原table被回收时，对应属性也会自动回收
+*** 优化table默认值
++ 使用弱引用key的table存储默认值
+  #+BEGIN_SRC lua
+  local defaults = {}
+  setmetatable(defaults, {__mode = "k"})
+  local mt = {__index = function (t) return defaults[t] end}
+  function setDefault (t, d)
+    defaults[t] = d
+    setmetatable(t, mt)
+  end
+  #+END_SRC
++ 使用容引用Value的table存储默认值
+  #+BEGIN_SRC lua
+  local metas = {}
+  setmetatable(metas, {__mode = "v"})
+  function setDefault (t, d)
+    local mt = metas[d]
+    if mt == nil then
+      mt = {__index = function () return d end}
+      metas[d] = mt     -- memorize
+    end
+    setmetatable(t, mt)
+  end
+  #+END_SRC
+两者性能没有太大差别，根据系统存在默认值数量取舍
+*** Finalizers -- lua5.2
+__gc 元方法在gc回收对象时调用
+setmetatable(o, mt)之前设置，否则不会应用
+* Part III: The Standard Libraries
+** 数学库
+math.xxx
+三角函数(sin, cos, tan, asin, acos 等)，使用弧度单位
+指数和对数函数(exp, log, log10)
+取整函数(floor, ceil), max 和 min
+伪随机数(random, randomseed), 以及变量pi 和 huge(Lua最大表示数字)
+** 二进制库 -- lua 5.2
+bit32.xxx
+band,bor,bxor,bnot
+string.format("0x%X", x)
+** Table库
+table.xxx
+| insert(t, index ,value) | index 默认值为#t + 1                |
+| remove(t, index)        | index 默认值为#t                    |
+| sort(t)                 | t的value 升序排序                   |
+| concat(s)               | 使用s作为连字符连接成字符串，默认空 |
+** 字符串库
+string.xxx
+| upper(s)          | 转换成大写                                 |
+| lower(s)          | 转换成小写                                 |
+| sub(s, i, j)      | 第i到第j字符，可为复数，-1表示最后一个字符 |
+| char(integer)     | 内部表示数字转换成字符                     |
+| byte(s, i)        | s,第i字符转换成 内部表示的数字，i默认为1   |
+| format(s, v1, v2) | 格式化字符串类似c语言的format              |
+模式匹配(pattern-matching)
+不同于其他脚本语言，lua没有使用POSIX(regexp),也没有使用Perl的正则表达式进行模式匹配
+其主要原因是考虑到lua的大小
+| find(s, p, i)     | 返回p在s中起始和结束位置, i为起始查找位置默认为1                    |
+| match(s, p, i)    | 返回s中匹配p的字符串，i为起始查找位置默认为1                        |
+| gsub(s, p, s1, n) | 返回一个字符串，把s中符合p的内容替换为s1, n限制替换次数，默认不限制 |
+| gmatch(s, p)      | 返回一个迭代器函数，遍历s中符合p模式的字符串                        |
+模式
+字符分类
+| .  | 所有字符       |
+| %a | 字母           |
+| %c | 控制字符       |
+| %d | 数字           |
+| %l | 小写字符       |
+| %g | 其他可打印字符 |
+| %p | 标点符号       |
+| %s | 空白字符       |
+| %u | 大写字母       |
+| %w | 字母和数字     |
+| %x | 十六进制数字   |
+| () | 表示位置       |
+重复次数
+| +  | 1或多次       |
+| *  | 0或多次       |
+| -  | 0或多次非贪婪 |
+| ？ | 0或1次        |
+使用%来转义 "(",")"和"."
+URL编码
+#+BEGIN_SRC lua
+function escape (s)
+  s = string.gsub(s, "[&=+%%%c]", function (c)
+        return string.format("%%%02X", string.byte(c))
+      end)
+  s = string.gsub(s, " ", "+")
+  return s 
+end
+function encode (t)
+  local b = {}
+  for k,v in pairs(t) do
+    b[#b + 1] = (escape(k) .. "=" .. escape(v))
+  end
+  return table.concat(b, "&")
+end
+t={name="al", query="a+b=c",q="yesorno"} 
+print(encode(t)) --> q=yes+or+no&query=a%2Bb+%3D+c&name=al
+function unescape (s)
+  s = string.gsub(s, "+", " ")
+  s = string.gsub(s, "%%(%x%x)", function (h)
+        return string.char(tonumber(h, 16))
+      end)
+  return s 
+end
+cgi = {}
+function decode (s)
+  for name, value in string.gmatch(s, "([^&=]+)=([^&=]+)") do
+    name = unescape(name)
+    value = unescape(value)
+    cgi[name] = value
+  end 
+end
+#+END_SRC
+Unicode
+\xxx
+** I/O库
+*** 简单I/O模型
+i/o默认初始化的输入文件为stdin，输出文件为stdout, 使用io.input, io.output改变两个文件。
+或者使用io.open,io.write 写,io.read 读
+
+io.read 读取模式
+| *all    | 读取整个文件                  |
+| *line   | 读取下一行                    |
+| *number | 读取一个数字                  |
+| <num>   | 读取不超过<num>个字符的字符串 |
+*** 完整I/O模型
+完整模型是基于文件句病的，它等价于C语言中的流(FILE*)，表示一个具有当前位置的打开文件
+io.open(filename, mode)
+类似C语言中的fopen函数, mode:
+| r | 读取                     |
+| w | 吸入（会删除原来的内容） |
+| a | 追加                     |
+| b | 打开二进制文件           |
+I/O库预定义了3个C语言流的句柄：io.stdin, io.stdout, io.stderr
+*** 二进制文件
+io.input, io.output 总是以文本的方式打开文件。
+在Unix中，二进制文件和文本文件是没有差别的，但是Windows中，必须用二进制模式打开二进制文件。
+Lua中二进制数据的处理与文本处理类似。Lua中的字符串可能包含任意字节，库中几乎所有函数都能处理任意字节。
+值为零的字节，转意%z来表示
+*** 其他文件操作
+函数flush会将缓冲区的数据写入文件
+函数seek可以获取和设置文件当前位置，f:seek(whence, offset)
+whence是一个字符串
+| set | 文件起始 |
+| cur | 当前位置 |
+| en  | 文件末尾 |
+函数的返回值与whence无关，相对于文件起始位置偏移字节数。
+whence,offset 默认值为"cur", 0, f:seek() 并不会改变当前位置，仅仅返回当前位置。
+** 系统库
+*** 日期和时间
+函数time和date提供了所有的日期和时间功能。
+time返回当前时间的秒数，以1970年月1日00:00:00 UTC 开始。可以有一个表示日期时间的table参数。
+data返回表示日期的table或格式化字符串，取决于参数标记值
+描述日期和时间的table：
+| year  |                   **** |
+| month |                  01-12 |
+| day   |                  01-31 |
+| hour  |                  00-23 |
+| min   |                  00-59 |
+| sec   |                  00-59 |
+| isdst | 布尔值，true表示夏令时 |
+如果没有时间字段默认为中午12:00:00
+
+如果参数为"*t"返回表示时间的table, 格式化字符串返回格式化后的日期字符串
+data参数格式化字符串标记含义
+| %a | 星期简写  Wed                  |
+| %A | 星期 Wednesday                 |
+| %b | 月份简写 Sep                   |
+| %B | 月份 September                 |
+| %c | 日期和时间 (09/16/98 23:48:10) |
+| %d | 几号                           |
+| %H | 24制小时                       |
+| %h | 12制小时                       |
+| %j | 全年第几天                     |
+| %M | 分钟                           |
+| %m | 月份                           |
+| %p | am or pm                       |
+
+os.clock 返回当前cpu秒数，通常计算程序运行时间
+*** 其他系统调用
+os.xxx
+| exit      | 终止程序                                     |
+| getenv    | 返回给定环境变量的值                         |
+| execute   | 和C中system类似， 执行系统命令，返回状态代码 |
+| setlocale | 设置区域                                     |
+** 调试库
+调试库由两类函数组成：自省函数（introspective function）和 钩子(hook)。
+*** 自省机制
+主要的自省函数是debug.getinfo. 第一个参数可以是一个函数或栈层。
+debug.getinfo(foo)得到一个table,其字段为：
+| source          | 通过loadstring加载则是这个字符串，或文件名加前缀@ |
+| short_src       | 最多60个字符source                                |
+| linedefined     | 函数定义起始行                                    |
+| lastlinedefined | 函数定义最后一行                                  |
+| what            | "Lua" 或 "C" 或 "main"                            |
+| name            | 该函数名字                                        |
+| namewhat        | "global", "local", "method", "filed" 或 ""        |
+| nups            | 该函数upvalue数量                                 |
+| activelines     | 一个table 包含该函数所有代码行                    |
+| func            | 函数本身                                          |
+| currentline     | 调用栈执行的行号，仅在参数为n是有                 |
+
+debug.getinfo(n), 返回相应栈上函数的数据。
+第二个可选参数指定获取的字段以提高性能
+| n | name， namewhat                                       |
+| f | func                                                  |
+| S | source, short_src, what, linedefined, lastlinedefined |
+| l | currentline                                           |
+| L | activelines                                           |
+| u | nups                                                  |
+
+还有个debug.traceback函数
++ 访问局部变量(Accessing local variables)
+  debug.getlocal查看任意活动函数的局部变量， 该函数有两个参数，栈层和变量索引，返回变量名和当前值。
+  不存在则返回nil,如果栈层是无效的会引发一个错误，可以使用debug.getinfo来检查栈层是否有效。
+  debug.setlocal设置局部变量的值，第三个参数为新值
++ 访问非局部变量(non-local varible)
+  getupvalue,第一个参数不是栈层，而是个closure。setupvalue用来修改。
++ 访问其他协同程序(Accessing other coroutines)
+  调试库中所有自省函数都接受一个可选的协同程序参数作为第一个参数，从外部来debug这个协同程序
+*** 钩子
+可以注册钩子函数，特定时间发生时被调用。
+debug.sethook(函数名，事件码字符串，[count计数])
+| call   | 函数调用时             | c                  |                          |
+| return | 函数返回时             | r                  |                          |
+| line   | 执行一行新代码时       | l                  | 回调函数第二个参数为行号 |
+| count  | 执行完指定数量的指令后 | 第三个参数指定计数 |                          |
+关闭钩子使用sethook设置为空便可
+*** 性能剖析器
+如果做计时性能剖析，最好使用C接口，Lua 调用钩子的代价太高，对于计数性的剖析，Lua 便可以做的很好。
+一个简单的计数剖析器
+#+BEGIN_SRC lua
+local Counters = {}
+local Names = {}
+
+local function hook() 
+  local f = debug.getinfo(2, "f").func
+  if Counters[f] = nil then 
+    Counters[f] = 1
+    Names[f] = debug.getinfo(s "Sn")
+  else
+    Counters[f] = Counters[f] + 1
+  end
+end
+
+function getname(func) -- 获取函数的信息
+  local n = Names[func]
+  if n.what == "C" then
+    return n.name
+  end
+  local lc = string.format("[%s]:%s, n.short_src, n.linedefined")
+  if n.namewhat ~= "" then
+    return string.format("%s (%s)", lc, n.name)
+  else
+    return lc
+  end
+end
+
+local f = assert(loadfile(arg[1]))
+debug.sethook(hook, "c")
+f()
+debug.sethook()
+
+for func, count in pairs(Counters) do
+  print(getname(func), count)
+end
+#+END_SRC
+* Part IV: The C API
+** C API 概述
+C API 是一组能使C代码与Lua交互的函数。其中包括读写Lua全局变量，调用Lua函数， 运行一段Lua代码，
+以及注册C函数以供Lua代码调用等。
+:TODO
+
+
+
+
