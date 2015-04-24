@@ -3,11 +3,11 @@
 #+EMAIL:       lpc1983@gmail.com
 #+DATE:        2014-09-27 Sat 
 #+URI:         /blog/%y/%m/%d/install-irony-on-mac-os-x
-#+KEYWORDS:    <TODO: insert your keywords here>
+#+KEYWORDS:    
 #+TAGS:        技术随笔
 #+LANGUAGE:    AUTO
 #+OPTIONS:     H:3 num:nil toc:nil \n:nil ::t |:t ^:nil -:nil f:t *:t <:t
-#+DESCRIPTION: <TODO: insert your description here>
+#+DESCRIPTION: 
 * 简述
   Emacs安装irony配合company-mode或者autocomplete我们便可以使C/C++, Obj-C代码自动补全。
   在Mac OS X上安装irony-server你可以使用Port或者Homebrew安装Clang(LLVM)。
