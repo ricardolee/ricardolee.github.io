@@ -1,4 +1,5 @@
 #+TITLE: 关于本人
+#+OPTIONS: toc:nil
 
 * About Pengcheng Li
   Geek一枚，没事折腾点东西，
