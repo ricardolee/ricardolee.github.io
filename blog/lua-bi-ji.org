@@ -3,7 +3,7 @@
 #+EMAIL:       lpc1983@gmail.com
 #+DATE:        2014-08-20 Wed
 #+URI:         /blog/%y/%m/%d/lua-笔记
-#+KEYWORDS:    学习笔记
+#+KEYWORDS:    lua
 #+TAGS:        学习笔记
 #+LANGUAGE:    AUTO
 #+OPTIONS:     H:3 num:nil toc:nil \n:nil ::t |:t ^:nil -:nil f:t *:t <:t

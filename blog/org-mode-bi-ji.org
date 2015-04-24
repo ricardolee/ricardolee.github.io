@@ -4,7 +4,7 @@
 #+DATE:        2014-04-16 Wed
 #+URI:         /blog/%y/%m/%d/org学习笔记
 #+KEYWORDS:    org
-#+TAGS:        org
+#+TAGS:        学习笔记
 #+LANGUAGE:    AUTO
 #+OPTIONS:     H:3 num:nil toc:nil \n:nil ::t |:t ^:nil -:nil f:t *:t <:t
 #+DESCRIPTION: org 学习笔记
