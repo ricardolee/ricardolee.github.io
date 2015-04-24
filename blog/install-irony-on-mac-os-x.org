@@ -1,0 +1,62 @@
+#+TITLE:       Emacs 安装 irony (On Mac OS X)
+#+AUTHOR:      Li Pengcheng
+#+EMAIL:       lpc1983@gmail.com
+#+DATE:        2014-09-27 13:12:30 UTC+08:00
+#+URI:         /blog/%y/%m/%d/install-irony-on-mac-os-x
+#+KEYWORDS:    <TODO: insert your keywords here>
+#+TAGS:        技术随笔
+#+LANGUAGE:    AUTO
+#+OPTIONS:     H:3 num:nil toc:nil \n:nil ::t |:t ^:nil -:nil f:t *:t <:t
+#+DESCRIPTION: <TODO: insert your description here>
+* 简述
+  Emacs安装irony配合company-mode或者autocomplete我们便可以使C/C++, Obj-C代码自动补全。
+  在Mac OS X上安装irony-server你可以使用Port或者Homebrew安装Clang(LLVM)。
+  是如果我们已经安装有xcode则不必单独再安装clang. 仅仅需要libclang的头文件
+* 首先确定安装Clang版本并下载Clang src
+  #+BEGIN_SRC shell
+  ~$ gcc --version
+  Configured with: --prefix=/Applications/Xcode.app/Contents/Developer/usr --with-gxx-include-dir=/usr/include/c++/4.2.1
+  Apple LLVM version 6.0 (clang-600.0.51) (based on LLVM 3.5svn)
+  Target: x86_64-apple-darwin13.4.0
+  Thread model: posix
+  #+END_SRC
+  这里我们看到LLVM 版本为3.5。
+  我们到LLVM 3.5的[[http://llvm.org/releases/download.html#3.5][Download Page]]下载[[http://llvm.org/releases/3.5.0/cfe-3.5.0.src.tar.xz][Clang source code]]。
+  解开包后我们将cfe-3.5.0.src放入~/Download 稍后使用。
+* 找到xcode的libclang
+  #+BEGIN_SRC shell
+  ~$ echo "" | gcc -xc++ -E -v -
+  Apple LLVM version 6.0 (clang-600.0.51) (based on LLVM 3.5svn)
+  Target: x86_64-apple-darwin13.4.0
+  Thread model: posix
+   "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang" -cc1 -triple x86_64-apple-macosx10.9.0 -E -disable-free -disable-llvm-verifier -main-file-name - -mrelocation-model pic -pic-level 2 -mdisable-fp-elim -masm-verbose -munwind-tables -target-cpu core2 -target-linker-version 241.7 -v -resource-dir /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/../lib/clang/6.0 -stdlib=libc++ -fdeprecated-macro -fdebug-compilation-dir /Users/lee -ferror-limit 19 -fmessage-length 171 -stack-protector 1 -mstackrealign -fblocks -fobjc-runtime=macosx-10.9.0 -fencode-extended-block-signature -fcxx-exceptions -fexceptions -fdiagnostics-show-option -fcolor-diagnostics -vectorize-slp -o - -x c++ -
+  clang -cc1 version 6.0 based upon LLVM 3.5svn default target x86_64-apple-darwin13.4.0
+  ignoring nonexistent directory "/usr/include/c++/v1"
+  #include "..." search starts here:
+  #include <...> search starts here:
+   /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/../include/c++/v1
+   /usr/local/include
+   /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/../lib/clang/6.0/include
+   /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/include
+   /usr/include
+   /System/Library/Frameworks (framework directory)
+   /Library/Frameworks (framework directory)
+  End of search list.
+  # 1 "<stdin>"
+  # 1 "<built-in>" 1
+  # 1 "<built-in>" 3
+  # 175 "<built-in>" 3
+  # 1 "<command line>" 1
+  # 1 "<built-in>" 2
+  # 1 "<stdin>" 2
+  ~$ ls /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/
+  arc                           libLTO.dylib                  libfunctionNameDemangle.dylib swift
+  clang                         libclang.dylib                sourcekitd.framework          swift_static
+  #+END_SRC  
+  可以看到libclang 在*/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/*。
+* 编译irony-server
+  建立一个build目录。
+  #+BEGIN_SRC shell
+  cmake -DCMAKE_INSTALL_RPATH_USE_LINK_PATH=ON -DLIBCLANG_LIBRARY=/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/libclang.dylib -DLIBCLANG_INCLUDE_DIR=/Users/lee/Downloads/cfe-3.5.0.src/include/ -DCMAKE_INSTALL_PREFIX=/Users/lee/.emacs.d/irony/ /Users/lee/.emacs.d/elpa/irony-20150202.1453/server && cmake --build . --use-stderr --config Release --target install
+  #+END_SRC
+  在build/bin目录里我们就得到了irony-server。将irony-server复制到.emacs.d/irony/bin下，我们irony便可以正常工作了。
