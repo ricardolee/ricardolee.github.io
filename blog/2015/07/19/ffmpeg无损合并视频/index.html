@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="en-us">
+  <head>
+    <title>ffmpeg无损合并视频 - Pengcheng的点点滴滴</title>
+    <meta charset="utf-8" />
+    <meta name="author" content="李鹏程 (Li Pengcheng)" />
+    <meta name="description" content="ffmpeg无损合并视频" />
+    <meta name="keywords" content="ffmpeg" />
+    <link rel="stylesheet" href="/media/css/main.css" type="text/css">
+    <link rel="stylesheet" href="/media/css/prettify.css" type="text/css">
+  </head>
+  <body class="container">
+    <div>
+      <header class="masthead">
+        <h1 class="masthead-title"><a href="/">Pengcheng的点点滴滴</a></h1>
+        <p>路漫漫</p>
+        <ul>
+          <li><a href="/blog/">Blog</a></li>
+          <li><a href="/tags/">Tags</a></li>
+          <li><a href="/about/">About</a></li>
+          <li><a href="https://github.com/ricardolee">GitHub</a></li>
+          <li><a href="/rss.xml">RSS</a></li>
+        </ul>
+        <form method="get" id="searchform" action="http://www.google.com/search">
+          <input type="text" class="field" name="q" id="s" placeholder="Search">
+          <input type="hidden" name="as_sitesearch" value="blog.lpch.me">
+        </form>
+      </header>
+    </div>
+
+<div>
+<div class="post">
+<h1>ffmpeg无损合并视频</h1>
+<div id="outline-container-sec-1" class="outline-2">
+<h2 id="sec-1">ffmpeg无损合并视频</h2>
+<div class="outline-text-2" id="text-1">
+<p>
+我们从很多视频网站上下载的视频是分段的，我们目标把它们合并起来，并且尽量无损。
+</p>
+</div>
+<div id="outline-container-sec-1-1" class="outline-3">
+<h3 id="sec-1-1">FFmpeg concat 分离器</h3>
+<div class="outline-text-3" id="text-1-1">
+<p>
+这种方法成功率很高，也是最好的，但是需要 FFmpeg 1.1 以上版本。先创建一个文本文件 filelist.txt：
+</p>
+<pre class="example">
+file 'input1.mkv'
+file 'input2.mkv'
+file 'input3.mkv'
+</pre>
+<p>
+然后：
+ffmpeg -f concat -i filelist.txt -c copy output.mkv
+</p>
+</div>
+</div>
+<div id="outline-container-sec-1-2" class="outline-3">
+<h3 id="sec-1-2">FFmepeg cancat 协议</h3>
+<div class="outline-text-3" id="text-1-2">
+<p>
+对于 MPEG 格式的视频，可以直接连接：
+</p>
+<div class="org-src-container">
+
+<pre class="src src-sh">ffmpeg -i <span style="color: #2aa198;">"concat:input1.mpg|input2.mpg|input3.mpg"</span> -c copy output.mpg
+</pre>
+</div>
+<p>
+对于非 MPEG 格式容器，但是是 MPEG 编码器（H.264、DivX、XviD、MPEG4、MPEG2、AAC、MP2、MP3 等），
+可以包装进 TS 格式的容器再合并。在新浪视频，有很多视频使用 H.264 编码器，可以采用这个方法
+</p>
+<div class="org-src-container">
+
+<pre class="src src-sh">ffmpeg -i input1.flv -c copy -bsf:v h264_mp4toannexb -f mpegts input1.ts
+ffmpeg -i input2.flv -c copy -bsf:v h264_mp4toannexb -f mpegts input2.ts
+ffmpeg -i input3.flv -c copy -bsf:v h264_mp4toannexb -f mpegts input3.ts
+ffmpeg -i <span style="color: #2aa198;">"concat:input1.ts|input2.ts|input3.ts"</span> -c copy -bsf:a aac_adtstoasc -movflags +faststart output.mp4
+</pre>
+</div>
+<p>
+保存 QuickTime/MP4 格式容器的时候，建议加上 -movflags +faststart。这样分享文件给别人的时候可以边下边看。
+</p>
+</div>
+</div>
+<div id="outline-container-sec-1-3" class="outline-3">
+<h3 id="sec-1-3">Mencoder 连接文件并重建索引</h3>
+<div class="outline-text-3" id="text-1-3">
+<p>
+这种方法只对很少的视频格式生效。幸运的是，新浪视频使用的 FLV 格式是可以这样连接的。对于没有使用 MPEG 编码器的视频（如 FLV1 编码器），可以尝试这种方法，或许能够成功。
+</p>
+<div class="org-src-container">
+
+<pre class="src src-sh">mencoder -forceidx -of lavf -oac copy -ovc copy -o output.flv input1.flv input2.flv input3.flv
+</pre>
+</div>
+</div>
+</div>
+<div id="outline-container-sec-1-4" class="outline-3">
+<h3 id="sec-1-4">使用 FFmpeg concat 过滤器重新编码（有损）</h3>
+<div class="outline-text-3" id="text-1-4">
+<p>
+语法有点复杂，但是其实不难。这个方法可以合并不同编码器的视频片段，也可以作为其他方法失效的后备措施。
+</p>
+<div class="org-src-container">
+
+<pre class="src src-sh">ffmpeg -i input1.mp4 -i input2.webm -i input3.avi -filter_complex <span style="color: #2aa198;">'[0:0] [0:1] [1:0] [1:1] [2:0] [2:1] concat=n=3:v=1:a=1 [v] [a]'</span> -map <span style="color: #2aa198;">'[v]'</span> -map <span style="color: #2aa198;">'[a]'</span> &lt;&#32534;&#30721;&#22120;&#36873;&#39033;&gt; output.mkv
+</pre>
+</div>
+<p>
+如你所见，上面的命令合并了三种不同格式的文件，FFmpeg concat 过滤器会重新编码它们。注意这是有损压缩。
+[0:0] [0:1] [1:0] [1:1] [2:0] [2:1] 分别表示第一个输入文件的视频、音频、第二个输入文件的视频、音频、第三个输入文件的视频、音频。concat=n=3:v=1:a=1 表示有三个输入文件，输出一条视频流和一条音频流。[v] [a] 就是得到的视频流和音频流的名字，注意在 bash 等 shell 中需要用引号，防止通配符扩展。
+</p>
+</div>
+</div>
+<div id="outline-container-sec-1-5" class="outline-3">
+<h3 id="sec-1-5">提示</h3>
+<div class="outline-text-3" id="text-1-5">
+<ol class="org-ol">
+<li>有些媒体需要先分离视频和音频，合并完成后再封装回去。
+</li>
+<li>对于 Packed B-Frames 的视频，如果封装成 MKV 格式的时候提示 /Can't write packet with unknown timestamp/，尝试在 FFmpeg 命令的 ffmpeg 后面加上 /-fflags +genpts/**
+</li>
+</ol>
+</div>
+</div>
+<div id="outline-container-sec-1-6" class="outline-3">
+<h3 id="sec-1-6">参考</h3>
+<div class="outline-text-3" id="text-1-6">
+<p>
+<a href="http://m13253.blogspot.com/2013/10/ways-to-join-videos-losslessly.html">http://m13253.blogspot.com/2013/10/ways-to-join-videos-losslessly.html</a>
+</p>
+</div>
+</div>
+</div>
+
+</div>
+</div>
+    <div>
+      <div class="post-meta">
+        <span title="post date" class="post-info">2015-07-19</span>
+        <span title="last modification date" class="post-info">2015-07-19</span>
+        <span title="tags" class="post-info"><a href="/tags/ffmpeg/">ffmpeg</a></span>
+        <span title="author" class="post-info">李鹏程 (Li Pengcheng)</span>
+      </div>
+      <section>
+        <h1>Comments</h1>
+        <div id="disqus_thread"></div>
+        <script type="text/javascript">
+          //var disqus_developer = 1;
+          var disqus_identifier = "/blog/2015/07/19/ffmpeg无损合并视频";
+          var disqus_url = "http://blog.lpch.me/blog/2015/07/19/ffmpeg无损合并视频";
+          var disqus_shortname = 'lpch';
+          /* * * DON'T EDIT BELOW THIS LINE * * */
+          (function() {
+          var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+          dsq.src = 'http://' + disqus_shortname + '.disqus.com/embed.js';
+          (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+          })();
+        </script>
+        <noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+        <a href="http://disqus.com" class="dsq-brlink">comments powered by <span class="logo-disqus">Disqus</span></a>
+      </section>
+      <script src="http://code.jquery.com/jquery-latest.min.js"></script>
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/prettify/r298/prettify.js"></script>
+      <script src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+      <script src="/media/js/main.js"></script>
+      <script type="text/javascript">
+        var _gaq = _gaq || [];
+        _gaq.push(['_setAccount', 'UA-62225597-1']);
+        _gaq.push(['_trackPageview']);
+        (function() {
+        var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+        ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+        var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+        })();
+      </script>
+      <div class="footer">
+        <p>Generated by <a href="http://www.gnu.org/software/emacs/">Emacs</a> 24.x (<a href="http://orgmode.org">Org mode</a> 8.x)</p>
+        <p>
+          Copyright &copy; 2012 - <span id="footerYear"></span> <a href="mailto:lpc1983 &lt;at&gt; gmail &lt;dot&gt; com">李鹏程 (Li Pengcheng)</a>
+          &nbsp;&nbsp;-&nbsp;&nbsp;
+          Powered by <a href="https://github.com/kelvinh/org-page" target="_blank">org-page</a>
+          <script type="text/javascript">document.getElementById("footerYear").innerHTML = (new Date()).getFullYear();</script>
+        </p>
+      </div>
+    </div>
+
+  </body>
+</html>
