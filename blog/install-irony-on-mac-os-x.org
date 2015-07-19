@@ -4,7 +4,7 @@
 #+DATE:        2014-09-27 Sat 
 #+URI:         /blog/%y/%m/%d/install_irony-on-mac-os-x
 #+KEYWORDS:    irony, OS X, Mac, Emacs
-#+TAGS:        技术随笔
+#+TAGS:        杂谈
 #+LANGUAGE:    AUTO
 #+OPTIONS:     H:3 num:nil toc:nil \n:nil ::t |:t ^:nil -:nil f:t *:t <:t
 #+DESCRIPTION: Emacs 安装 irony (On Mac OS X)
