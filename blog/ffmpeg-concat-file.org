@@ -19,7 +19,9 @@ file 'input2.mkv'
 file 'input3.mkv'
 #+END_SRC
 然后：
+#+BEGIN_SRC sh
 ffmpeg -f concat -i filelist.txt -c copy output.mkv
+#+END_SRC
 ** FFmepeg cancat 协议
 对于 MPEG 格式的视频，可以直接连接：
 #+BEGIN_SRC sh
