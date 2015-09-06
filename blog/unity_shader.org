@@ -1,0 +1,291 @@
+#+TITLE:       Unity Sharder
+#+AUTHOR:      李鹏程 (Li Pengcheng)
+#+EMAIL:       lpc1983@gmail.com
+#+DATE:        2015-08-27 Thu
+#+URI:         /blog/%y/%m/%d/unity-sharder
+#+KEYWORDS:    unity sharder
+#+TAGS:        unity
+#+LANGUAGE:    AUTO
+#+OPTIONS:     H:3 num:nil toc:t \n:nil ::t |:t  -:nil f:t *:t <:t ^:nil
+#+DESCRIPTION: Unity Shader
+#+STARTUP: indent
+
+* surface shader property types
+#+BEGIN_SRC c 
+Properties 
+{
+   _AmbientColor ("Ambient Color", Color) = (1, 1, 1 ,1)
+// Variable name, Inspector GUI nam, Type, Default Value
+}
+#+END_SRC
+
+| Surface Shader property types |                                                        |
+|-------------------------------+--------------------------------------------------------|
+| Range (min, max)              | slider in inspector float vaule min value to max value |
+| Color                         | color picker in inspector (float, float, float, float) |
+| 2D                            | texture swatch                                         |
+| Rect                          | non-power-of-2 texture,  same as 2D GUI element        |
+| Cube                          | cube map swatch                                        |
+| Float                         | float value without a slider                           |
+| Vector                        | four-float property, directions or colors              |
+[[http://docs.unity3d.com/Manual/SL-Properties.html]]
+
+* Light Mode 
+The #pragma surface directive tells the Shader which lighting model to use for its calculation.
+#+BEGIN_SRC c
+  #progma surface surf BasicDiffuse
+#+END_SRC
++ *surf* is surface program
+  void surf (Input IN, inout SurfaceOutput o)
++ *BasicDiffuse* is lighting model which define with LightingBasicDiffuse (Lighting<Your chouse name>)
+  or defined in Lighting.cginc.
+  1. *half4 LightingName(SurfaceOutput s, half3 lightDir, half atten)*
+     This function is used for forward rendering when the view direction is not needed.
+  2. *half4 LightingName(SurfaceOutput s, half3 lightDir, half3 viewDir, half atten)*
+     This function is used in forward rendering when a view direction is needed.
+  3. *half4 LightingName(SurfaceOutput s, half4 light)*
+     This function is used when you are using deferred rendering for you project.
+* Build-in Shader variables 
+All declared in UnityShaderVariables.cginc
+** Transformations
+All these matrices are float 4x4 type.
+| Name               | Value                                     |
+|--------------------+-------------------------------------------|
+| UNITY_MATRIX_MVP   | Current model * view * projection matrix. |
+| UNITY_MATRIX_MV    | Current mode * view matrix.               |
+| UNITY_MATRIX_V     | Current view matrix.                      |
+| UNITY_MATRIX_P     | Current projection matrix.                |
+| UNITY_MATRIX_VP    | Current view * projection matrix.         |
+| UNITY_MATRIX_T_MV  | Transpose of model * view matrix.         |
+| UNITY_MATRIX_IT_MV | Inverse transpose of model * view matrix. |
+| _Object2World      | Current model matrix.                     |
+| _World2Object      | Inverse of current world matrix.          |
+** Camera and screen
+These variables will correspond to the Camera that is rendering. For example during shadowmap
+rendering. they will still refer to the Camera component values, and not the "virtual camera"
+that is used for the shdowmap projection.
+| Name                             | Type     | value                                                                      |
+|----------------------------------+----------+----------------------------------------------------------------------------|
+| _WorldSpaceCameraPos             | float3   | World space position of the camera                                         |
+| _ProjectionParams                | float4   | x is 1.0 (or -1.0 if currently rendering with a flipped projection matrix) |
+|                                  |          | y is the camera's near plane                                               |
+|                                  |          | z is the camera's far plane                                                |
+|                                  |          | w is 1 / FarPlane                                                          |
+| _ScreenParams                    | float4   | x is the camera's render target width in pixels                            |
+|                                  |          | y is the camera's render target height in pixels                           |
+|                                  |          | z is 1.0 + 1.0 / width                                                     |
+|                                  |          | w is 1.0 + 1.0 / height                                                    |
+| _ZBufferParams                   | float4   | Used to linearize Z buffer values.                                         |
+|                                  |          | x is 1 - far / near                                                        |
+|                                  |          | y is far / near                                                            |
+|                                  |          | z is x / far                                                               |
+|                                  |          | w is y / far                                                               |
+| unity_OrthoParams                | float4   | x is orthographic camera's width                                           |
+|                                  |          | y is orthographic camera's height                                          |
+|                                  |          | z is unused                                                                |
+|                                  |          | w is 1.0 when camera is orthographic, 0.0 when perspective                 |
+| unity_CameraProjection           | float4x4 | Camera's projection matrix                                                 |
+| unity_CameraInvProjection        | float4x4 | Inverse of camera's projection matrix                                      |
+| unity_CameraWorldClipPlanes[ 6 ]   | float4   | Camera frustum plane world space equations                                 |
+|                                  |          | in this order: left, right, bottom, top, near, far                         |
+** Time
+| Name            | Type   | Value                                                                               |
+|-----------------+--------+-------------------------------------------------------------------------------------|
+| _Time           | float4 | Time since level load (t/20, t, t*2, t*3), use to animate things inside the shaders |
+| _SinTime        | float4 | Sine of time: (t/8, t/4, t/2, t)                                                    |
+| _CosTime        | float4 | Cosine of time: (t/8, t/4, t/2, t)                                                  |
+| unity_DeltaTime | float4 | Delta time: (dt, 1/dt, smoothDt, 1/smoothDt)                                        |
+** Lighting
+Light parameters are passed to shaders in different ways depending on which *Rendering Path* is used, 
+and which LightMode *Pass Tag* is used in the shader.
+*** Forward rendering(ForwardBase and ForwardAdd pass types)
+| Name                | Type       | Value                                                                                 |
+|---------------------+------------+---------------------------------------------------------------------------------------|
+| LightColor0         | float4     | Directional lights: (world space direction, 0)                                        |
+| WorldSpaceLightPos0 |            | Other lights: (world space position, 1)                                               |
+| _LightMatrix0       | float4x4   | world-to-light matrix. Used to sample cookie & attenuation textures.                  |
+| unity_4LightPosX0   | float4     | (ForwardBase pass only) world space position of first four non-important point lights |
+| unity_4LightPosY0   |            |                                                                                       |
+| unity_4LightPosZ0   |            |                                                                                       |
+| untiy_4LightAtten0  | float4     | (ForwardBase pass only) attenuation factors of first four non-important point lights  |
+| unity_LightColor    | half4[ 4 ] | (ForwardBase pass only) colors of first four non-important point lights               |
+Deferred shading and deferred lighting, used in the lighting pass shader (all declared in UnityDeferredLibrary.cginc)
+| Name         | Type     | Value                                                               |
+|--------------+----------+---------------------------------------------------------------------|
+| LightColor   | float4x4 | World-to-Light matrix. Used to sample cookie & attenuation textures |
+| LightMatrix0 |          |                                                                     | 
+*** Vertex-lit rendering(Vertex pass type)
+| Name                 | Type        | Value                                                                                                  |
+|----------------------+-------------+--------------------------------------------------------------------------------------------------------|
+| unity_LightColor     | half4[ 8 ]  | Light colors                                                                                           |
+| unity_LightPosition  | float4[ 8 ] | View-space light positions. (-direction, 0) for directional light; (position, 1) for point/spot lights |
+| unity_LightAtten     | half4[ 8 ]  | Light attenuation factors                                                                              |
+|                      |             | x is cos(spotAngle/2) or -1 for non-spot lights                                                         |
+|                      |             | y is 1/cos(spotAngle/4) or 1 for non-spot lights                                                        |
+|                      |             | z is quadratic attenuation                                                                             |
+|                      |             | w is squared light range                                                                               |
+| unity_LightDirection | float[ 8 ]  | View-space spot light positions; (0, 0, 1, 0) for non-spot lights                                       |
+*** For and Ambient
+| Name                     | Type   | Value                                                                 |
+|--------------------------+--------+-----------------------------------------------------------------------|
+| UNITY_LIGHTMODEL_AMBIENT | fixed4 | Ambient lighting color (Equator ambient is three-color lighting case) |
+| unit_AmbientSky          | fixed4 | Sky ambient lighting color in three-color lighting case               |
+| unit_AmbientGround       | fixed4 | Ground ambient lighting color in three-color lighting case            |
+| unit_FogColor            | fixed4 | Fog color                                                             |
+| unit_FogParams           | fixed4 | Parameters for fog calculation:                                       |
+|                          |        | x: density / sqrt(ln2), is useful for Exp2 fog mode                   |
+|                          |        | y: density / ln(2), for Exp mode                                      |
+|                          |        | z: -1 / (end - start), for Linear mode                                |
+|                          |        | w: end / (end - start), for Linear mode                               |
+*** Various
+| Name          | Type   | Value                                    |
+|---------------+--------+------------------------------------------|
+| unity_LODFade | float4 | Level-of-detail fade when using LODGroup |
+|               |        | x: fade (0..1)                           |
+|               |        | y: fade quantized to 16 levels           |
+|               |        | z,w: unused                              |
+* Build-in Input struct variables and functions
+| Value                             | Descript                                                                                            |
+|-----------------------------------+-----------------------------------------------------------------------------------------------------|
+| float3 viewDir                    | view direction, for computing Parallax effects, rim lighting, and so on                             |
+| float4 COLOR                      | interpolated per-vertex color                                                                       |
+| float4 screenPos                  | screen-space position for reflection effects, Used by WetStreet shader in Dark Unity, for example   |
+| float3 worldPos                   | world space position                                                                                |
+| float3 worldRefl                  | world reflection vector if Surface Shader does not wirte to o.Normal. Reflect-Diffuse               |
+| float3 worldNormal                | conain world normal vector if Surface Shader doest not write to o.Normal.                           |
+| float3 worldRef;  INTERNAL_DATA   | contain world reflection vector if Surface Shader writes to o.Normal. To get the reflection vector  |
+|                                   | base on per-pixel normal map, use *WorldReflectionVector(IN, o.Normal)*. Reflect-Bumped             |
+| float3 worldNormal; INTERNAL_DATA | contain world normal vector if Surface Shader writes to o.Normal. To get the normal vector based on |
+|                                   | per-pixel normal map, use *WorldNormalVector(IN, o.Normal)*                                         |
+* Appendix. Cg Standard Library Functions
+** Mathematical Functions
+| Fucntions                     | Description                                                                                        |
+|-------------------------------+----------------------------------------------------------------------------------------------------|
+| acos(x)                       | arccosine of x in range [0, \pi], x in [-1, 1]                                                     |
+| all(x)                        | true if every component of x is not equal to 0, false otherwise                                    |
+| any(x)                        | true if any component of x is not equal to 0, false otherwise                                      |
+| asin(x)                       | arcsine of x in range [-\pi/2, \pi/2]; x should be in [-1, 1]                                       |
+| atan(x)                       | arctangent of x in range [-\pi/2, \pi/2]                                                           |
+| atan2(y, x)                   | arctangent of y / x in range [-\pi, \pi]                                                           |
+| ceil(x)                       | Smallest integer not less than x                                                                   |
+| clamp(x, a, b)                | x clamped to the range [a, b] as follows :                                                         |
+|                               | return a if (x < a)                                                                                |
+|                               | return b if (x > b)                                                                                |
+|                               | return x otherwise                                                                                 |
+| cos(x)                        | cosine of x                                                                                        |
+| cosh(x)                       | hyperbolic cosine of x                                                                             |
+| cross(A, B)                   | cross product of vector A and B (three-component vector)                                           |
+| degrees(x)                    | radian to degree conversion                                                                        |
+| determinant(M)                | determinant of matrix M                                                                            |
+| dot(A, B)                     | dot product of vector A and B                                                                      |
+| exp(x)                        | exponential function e^x                                                                           |
+| exp2(x)                       | exponential function 2^x                                                                           |
+| floor(x)                      | largest integer not greater than x                                                                 |
+| fmod(x, y)                    | remainder of x / y with the same sign as x, y is 0 implementation-defined.                         |
+| frac(x)                       | fractional part of x                                                                               |
+| frexp(x, out exp)             | splits x into a normalized fraction in the interval [?, 1), power-of-2 stored in exp               |
+| isfinite(x)                   | true if x is finite                                                                                |
+| isinf(x)                      | true if x is infinite                                                                              |
+| isnan(x)                      | true if x is NaN (Not a Number)                                                                    |
+| ldexp(x, n)                   | x * 2^n                                                                                            |
+| lerp(a, b, f)                 | linear interpolation                                                                               |
+|                               | (1 - f) * a + b * f                                                                                |
+|                               | where a and b are matching vector or scalar types.                                                 |
+|                               | f can be either a scalar or a vector of the same type as a and b .                                 |
+| lit(N \cdot L, N \cdot N, m)  | computes lighting coefficients for ambient, diffuse, and specular light contributions.             |
+|                               | expects the NdotL parameter to contain N ?L and the NdotH parameter to contain N ?H .              |
+|                               | returns a four-component vector as follows :                                                       |
+|                               | *x* : result vector contains the ambient coefficient, which is always 1.0                          |
+|                               | *y* : diffuse coefficient, 0 if ( N \cdot L ) < 0; otherwise (N \cdot L)                           |
+|                               | *z* : specular coefficient, 0 if either(N \cdot L) < 0 or (N \cdot H) < 0; otherwise (N \cdot H)^m |
+|                               | *w* : 1.0                                                                                          |
+|                               | no vectorized version of this function.                                                            |
+| log(x)                        | natural logarithm ln(x) (x > 0)                                                                    |
+| log2(x)                       | base 2 logarithm of x  (x > 0)                                                                     |
+| log10(x)                      | base 10 logarithm of x  (x > 0)                                                                    |
+| max(a, b)                     | maximum of a and b                                                                                 |
+| min(a, b)                     | minimum of a and b                                                                                 |
+| modf(x, out ip)               | slipts x into integral and fractional parts, each with the same sign as x                          |
+|                               | stores the integral part in *ip* and returns the fractional part                                   |
+| mul(M, N)                     | matrix product of matrix M and matrix N                                                            |
+| mul(M, v)                     | product of matrix M and column vector v                                                            |
+| mul(v, M)                     | product of row vector v and matrix M                                                               |
+| noise(x)                      | either a one, two or three dimensinal noise function, depend x's type                              |
+|                               | return value [0, 1]                                                                                |
+| pow(x, y)                     | x^y                                                                                                |
+| radians(x)                    | degree-to-radian conversion                                                                        |
+| round(x)                      | closest integer to x                                                                               |
+| rsqrt(x)                      | reciprocal square root of x (x > 0)                                                                |
+| saturate(x)                   | clamps x to the [0, 1] range                                                                       |
+| sign(x)                       | 1 if x > 0; -1 if x < 0; 0 otherwise                                                               |
+| sin(x)                        | sine of x                                                                                          |
+| sincos(float x, out s, out c) | s is sine of x, c is cosine of x                                                                   |
+| sinh(x)                       | hyperbolic sine of x                                                                               |
+| smoothstep(min, max, x)       | x between min and max                                                                              |
+|                               | return a smoothly varying value that from 0 at x = mini to 1 at x = max                            |
+|                               | the interpolation formula is evaluated:                                                            |
+|                               | - 2 * ((x -min) / (max - min))^3 + 3 * ((x - min) / (max - min))^2                                 |
+| step(a, x)                    | 0 if x < a; 1 if x >= a                                                                            |
+| sqrt(x)                       | square root of x (x > 0)                                                                           |
+| tan(x)                        | tangent of x                                                                                       |
+| tanh(x)                       | hyperbolic tangent of x                                                                            |
+| transpose(M)                  | matrix transpose of matrix M                                                                       |
+** Geometric Functions
+| Funciton              | Description                                           |
+|-----------------------+-------------------------------------------------------|
+| distance(p1, p2)      | euclidean distance between points p1 and p2           |
+| faceforward(N, I, Ng) | N if Ng \cdot I < 0; -N otherwise                     |
+| length(v)             | euclidean length of a vector                          |
+| normalize(v)          | return a vector of lenght 1, same direction as v      |
+| reflect(I, N)         | compute reflection vector from entering ray           |
+|                       | directory I and surface normal N                      |
+|                       | valid only for three-component                        |
+| refract(I, N, eta)    | given entering ray direction I, surface normal N,     |
+|                       | and ralative index of refraction eta,                 |
+|                       | computes refraction vector.                           |
+|                       | if the angel between I and N is too large for a given |
+|                       | eta, return (0, 0, 0).                                |
+|                       | valid only for three-component vectors                |
+** Texture Map Function
+| Function                                                      | Description                                                                                   |
+|---------------------------------------------------------------+-----------------------------------------------------------------------------------------------|
+| tex1D(sampler1D tex, float s)                                 | 1D nonprojective texture query                                                                |
+| tex1D(sampler1D tex, float s, float dsdx, float dsdy)         | 1D nonprojective texture query with derivatives                                               |
+| tex1D(sampler1D tex, float2 sz)                               | 1D nonprojective depth compare texture query                                                  |
+| tex1D(sampler1D tex, float2 sz, float dsdx, float dsdy)       | 1D nonprojective depth compare texture query with derivatives                                 |
+| tex1Dproj(sampler1D tex, float2 sq)                           | 1D projective texture query                                                                   |
+| tex1Dproj(sampler1D tex, float3 szq)                          | 1D projective depth compare texture query                                                     |
+| tex2D(sampler2D tex, float2 s)                                | 2D nonprojective texture query                                                                |
+| tex2D(sampler2D tex, float2 s, float2 dsdx, float2 dsdy)      | 2D nonprojective texture query with derivatives                                               |
+| tex2D(sampler2D tex, float3 sz)                               | 2D nonprojective depth compare texture query                                                  |
+| tex2D(sampler2D tex, float3 sz, float2 dsdx ,float2 dsdy)     | 2D nonprojective depth compare texture query with derivatives                                 |
+| tex2Dproj(sampler2D tex, float3 sq)                           | 2D projective texture query                                                                   |
+| tex2Dproj(sampler2D tex, float4 szq)                          | 2D projective depth compare texture query                                                     |
+| texRECT(samplerRECT tex, float2 s)                            | 2D nonprojective texture rectangle texture query (OpenGL only)                                |
+| texRECT(samplerRECT tex, float2 s, float2 dsdx, float2 dsdy)  | 2D nonprojective texture rectangle texture query with dervatives (OpenGL only)                |
+| texRECT(samplerRECT tex, float3 sz)                           | 2D nonprojective texture rectangle depth compare texture query (OpenGL only)                  |
+| texRECT(samplerRECT tex, float3 sz, float2 dsdx, float2 dsdy) | 2D nonprojective texture rectangle depth compare texture query with derivatives (OpenGL only) |
+| texRECTproj(samplerRECT tex, float3 sq)                       | 2D texture rectangle projective texture query (OpenGL only)                                   |
+| texRECTproj(samplerRECT tex, float4 szq)                      | 2D texture rectangle projective depth compare texture query (OpenGL only)                     |
+| tex3D(sampler3D tex, float3 s)                                | 3D nonprojective texture query                                                                |
+| tex3D(sampler3D tex, float3 s, float3 dsdx, float3 dsdy)      | 3D nonprojective texture query with derivatives                                               |
+| tex3Dproj(sampler3D tex, float4 sq)                           | 3D projective texture query                                                                   |
+| texCUBE(samplerCUBE tex, float3 s)                            | cube map nonprojective texture query                                                          |
+| texCUBE(samplerCUBE tex, float3 s, float3 dsdx, float3 dsdy)  | cube map nonprojective texture query with derivatives                                         |
+| texCUBEproj(samplerCUBE tex, float4 sq)                       | cube map projective texture query (ignores q)                                                 |
+** Derivative Functions
+| Function | Description                                                                   |
+|----------+-------------------------------------------------------------------------------|
+| ddx(a)   | approximate partial derivative of a with respect to screen-space x coordinate |
+| ddy(b)   | approximate partial derivative of a with respect to screen-space y coordinate |
+** Debuging Function
+| Function             | Description                                          |
+|----------------------+------------------------------------------------------|
+| void debug(float4 x) | if the compiler's DEBUG option is enabled, calling   |
+|                      | this function causes the value x to be copied to the |
+|                      | COLOR output of the program, and execution of the    |
+|                      | program is terminated.                               |
+|                      | if the compiler's DEBUG option is not enabled, this  |
+|                      | function does nothing                                |
+
+  
