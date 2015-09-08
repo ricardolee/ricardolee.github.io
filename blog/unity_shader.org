@@ -30,6 +30,27 @@ Properties
 | Vector                        | four-float property, directions or colors              |
 [[http://docs.unity3d.com/Manual/SL-Properties.html]]
 
+* Default render queues
+| Render Queue | Render queue description                            | Render queue value c |
+|--------------+-----------------------------------------------------+----------------------|
+| Background   | This render queue is rendered first                 |                 1000 |
+|              | It is used for skyboxes and so on                   |                      |
+| Geometry     | This is the default render queue.                   |                 2000 |
+|              | This is used for most objects.                      |                      |
+|              | Opaque geometry uses this queue                     |                      |
+| AlphaTest    | Alpha-tested geometry uses this queue.              |                 2450 |
+|              | It's different from the Geometry queue,             |                      |
+|              | as it's more efficient to render alpha-tested       |                      |
+|              | objects after all the solid objects are drawn.      |                      |
+| Transparent  | This render queue is rendered after Geometry and    |                 3000 |
+|              | AlphaTest queues in back-to-front order.Anything    |                      |
+|              | alpha-blended(that is, Shaders that don't write to  |                      |
+|              | depth buffer) should go here, for example glass and |                      |
+|              | particle effects.                                   |                      |
+| Overlay      | This render queue is meant for overlay effects.     |                 4000 |
+|              | Anything rendered last should go here, for example  |                      |
+|              | lens flares.                                        |                      |
+
 * Light Mode 
 The #pragma surface directive tells the Shader which lighting model to use for its calculation.
 #+BEGIN_SRC c
@@ -52,7 +73,7 @@ All these matrices are float 4x4 type.
 | Name               | Value                                     |
 |--------------------+-------------------------------------------|
 | UNITY_MATRIX_MVP   | Current model * view * projection matrix. |
-| UNITY_MATRIX_MV    | Current mode * view matrix.               |
+| UNITY_MATRIX_MV    | Current model * view matrix.              |
 | UNITY_MATRIX_V     | Current view matrix.                      |
 | UNITY_MATRIX_P     | Current projection matrix.                |
 | UNITY_MATRIX_VP    | Current view * projection matrix.         |
